@@ -20,6 +20,8 @@ library(ggeffects) #creating predicted values and visualizing them
 library(lmtest) # for likelihood ratio tests
 library(car) # for variance inflation factors
 library(corrplot) # to check for correlation between EVs
+library(patchwork) #combine graphs into 1 panel
+
 
 ##IMPORT DATA SET##
 
@@ -185,10 +187,10 @@ m1_final_since<- glmer(Sighting.Count ~ since_intervention + subdistrict +
          family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 
 #Final model with effort
-m1_final_effort <- glmer(Sighting.Count ~ effort_humanpop + Track.Length + subdistrict + Mode.Transport +
-                                (1 | polygon/survey) +
-                                offset(log(Track.Length)), 
-                              family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+m1_final_effort <- glmer(Sighting.Count ~ effort_humanpop + subdistrict +
+                                           (1 | polygon/survey) +
+                                           offset(log(Track.Length)), 
+                                         family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 
 
 ##CHECK FOR OVERDISPERSION##
@@ -223,25 +225,40 @@ plot(simulationOutput_m1_since) #does this show a problem with DHARMa residuals
 preds1 <- ggpredict(m1_final_effort, terms = c("effort_humanpop", "subdistrict"),
                     condition = c(Track.Length=1))
 
-ggplot(preds1, aes(x = x, y = predicted, colour = group)) +
+p1 <-ggplot(preds1, aes(x = x, y = predicted, colour = group)) +
   stat_smooth(method = "lm") +
-  labs(title = "Predicted Sightings/km by All Time Sterilization Effort and Subdistrict",
-       x = "All Time Effort (Divided by Human Population)",
+  labs(title = "Predicted Sightings/km by\n All Time Sterilization Effort\n and Subdistrict",
+       x = "All Time Effort (per Capita)",
        y = "Predicted Sightings per km",
        colour = "Subdistrict") +
-  theme_minimal()
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  scale_color_viridis_d(option = "C", end = 0.9)
 
 
 # Get predicted values over time since intervention
 preds1.1 <- ggpredict(m1_final_since, terms = c("since_intervention", "subdistrict"),
                     condition = c(Track.Length=1))
 
-ggplot(preds1.1, aes(x = x, y = predicted, colour = group)) +
+p2 <- ggplot(preds1.1, aes(x = x, y = predicted, colour = group)) +
   stat_smooth(method = "lm") +
-  labs(title = "Predicted Sightings/km by Years Since Intervention and Subdistrict",
+  labs(title = "Predicted Sightings/km by\n Years Since Intervention\n and Subdistrict",
        x = "Time Since Intervention (Year)",
        y = "Predicted Sightings per km",
        colour = "Subdistrict") +
-  theme_minimal()
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  scale_color_viridis_d(option = "C", end = 0.9)
+
+#Combine into one panel with a shared legend
+p1 + p2 + plot_layout(guides = "collect")
 
 
