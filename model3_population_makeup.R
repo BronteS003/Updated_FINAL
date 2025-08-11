@@ -32,7 +32,21 @@ sightings <- readRDS("sightings.rds", refhook = NULL)
 m3.1_since <- glmer(Adult.Lactating.female ~ since_intervention + owned + subdistrict +
                     (1 | polygon),
                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-drop1(m3.1_since, test = "Chisq") ##None significantly improve fit of the model
+drop1(m3.1_since, test = "Chisq") 
+
+#Create updated model dropping owned
+m3.1_1since <- glmer(Adult.Lactating.female ~ since_intervention + subdistrict +
+                      (1 | polygon),
+                    family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.1_1since, test = "Chisq") 
+
+#Create updated model dropping subdistrict
+m3.1_2since <- glmer(Adult.Lactating.female ~ since_intervention +
+                       (1 | polygon),
+                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.1_2since, test = "Chisq") #None of the variables are significant
+
+
 
 #Total Effort
 
@@ -40,7 +54,20 @@ drop1(m3.1_since, test = "Chisq") ##None significantly improve fit of the model
 m3.1_effort <- glmer(Adult.Lactating.female ~ effort_humanpop + owned + subdistrict +
                       (1 | polygon),
                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-drop1(m3.1_effort, test = "Chisq") ##None significantly improve fit of the model
+drop1(m3.1_effort, test = "Chisq") 
+
+#Create updated model dropping owned
+m3.1_1effort <- glmer(Adult.Lactating.female ~ effort_humanpop + subdistrict +
+                       (1 | polygon),
+                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.1_1effort, test = "Chisq") 
+
+#Create updated model dropping subdistrict
+m3.1_2effort <- glmer(Adult.Lactating.female ~ effort_humanpop +
+                        (1 | polygon),
+                      family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.1_2effort, test = "Chisq") #None of the variables are significant
+
 
 #Effort by year
 
@@ -48,48 +75,28 @@ drop1(m3.1_effort, test = "Chisq") ##None significantly improve fit of the model
 m3.1_year <- glmer(Adult.Lactating.female ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + owned + subdistrict +
                        (1 | polygon),
                      family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-drop1(m3.1_year, test = "Chisq") ##None are significantly improve fit of the model
+drop1(m3.1_year, test = "Chisq") 
+
+#Create updated model dropping subdistrict
+m3.1_1year <- glmer(Adult.Lactating.female ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + owned +
+                     (1 | polygon),
+                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.1_1year, test = "Chisq") 
+
+#Create updated model dropping owned
+m3.1_2year <- glmer(Adult.Lactating.female ~ last3y_humanpop + last2y_humanpop + last1y_humanpop +
+                      (1 | polygon),
+                    family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.1_2year, test = "Chisq") 
 
 
+#Final model - lactating females
+m3.1_final <- glmer(Adult.Lactating.female ~ last3y_humanpop + last2y_humanpop + last1y_humanpop +
+                                 (1 | polygon),
+                               family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 
 
-##MODEL SELECTION (Dog Density) - Lactating Females##
-dog_density <- readRDS("dog_density.rds", refhook = NULL)
-
-#Time since intervention
-
-#Most complex model, lactating females by time since intervention
-m3.1_since_dd <- glmer(Adult.Lactating.female ~ since_intervention + Owned + Free.roaming.NO.collar + subdistrict +
-                      (1 | polygon/survey),
-                    family = poisson, data = dog_density, control = glmerControl(optimizer = "bobyqa"))
-drop1(m3.1_since_dd, test = "Chisq")
-
-#Updated model droppping free roaming no collar
-m3.1_1since_dd <- glmer(Adult.Lactating.female ~ since_intervention + Owned + subdistrict +
-                         (1 | polygon/survey),
-                       family = poisson, data = dog_density, control = glmerControl(optimizer = "bobyqa"))
-drop1(m3.1_1since_dd, test = "Chisq") ##None significantly improve fit of the model
-
-
-#Total Effort
-
-#Most complex model, lactating females by total sterilization effort
-m3.1_effort_dd <- glmer(Adult.Lactating.female ~ effort_humanpop + Owned + Free.roaming.NO.collar + subdistrict +
-                         (1 | polygon/survey),
-                       family = poisson, data = dog_density, control = glmerControl(optimizer = "bobyqa"))
-drop1(m3.1_effort_dd, test = "Chisq") ##None significantly improve fit of the model
-
-
-#Effort by year
-
-#Most complex model, lactating females by effort annually
-m3.1_year_dd <- glmer(Adult.Lactating.female ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + Owned + Free.roaming.NO.collar + subdistrict +
-                          (1 | polygon/survey),
-                        family = poisson, data = dog_density, control = glmerControl(optimizer = "bobyqa"))
-drop1(m3.1_year_dd, test = "Chisq") ##None are significantly improve fit of the model
-
-
-##MODEL SELECTION (sightings) - Lactating Females##
+##MODEL SELECTION (sightings) - Puppies##
 
 #Time since intervention
 
@@ -152,18 +159,73 @@ AIC(m3.2_since_final, m3.2_effort_final, m3.2_year_final) #nearly identical AICs
 #--------------------
 
 #Check residual deviance relative to degrees of freedom for model3.2
+overdisp.glmer(m3.1_final)
+
 overdisp.glmer(m3.2_since_final)
 
 #Visually check overdispersion using DHARMa plot
+simulationOutput_model3.1 <- simulateResiduals(fittedModel = m3.1_final) #create simulated data
+testDispersion(simulationOutput_model3.1)
+
 simulationOutput_model3.2 <- simulateResiduals(fittedModel = m3.2_since_final) #create simulated data
 testDispersion(simulationOutput_model3.2)
 
 #Test for outliers
+testOutliers(simulationOutput_model3.1)
+
 testOutliers(simulationOutput_model3.2)
 
 #Check for zero inflation
+testZeroInflation(simulationOutput_model3.1)
+
 testZeroInflation(simulationOutput_model3.2)
 
+
+
+##Graph model 3.1
+# Reshape intervention by years
+library(tidyr)
+
+sightings_long <- sightings %>%
+  pivot_longer(
+    cols = c(last3y_humanpop, last2y_humanpop, last1y_humanpop),
+    names_to = "YearBreakdown",
+    values_to = "sterilization_effort"
+  ) %>%
+  mutate(
+    YearBreakdown = case_when(
+      YearBreakdown == "last3y_humanpop" ~ 3,
+      YearBreakdown == "last2y_humanpop" ~ 2,
+      YearBreakdown == "last1y_humanpop" ~ 1
+    )
+  )
+
+#Refit model
+m3.1_final_long <- glmer(
+  Adult.Lactating.female ~ sterilization_effort * YearBreakdown+ (1 | polygon),
+  family = binomial,
+  data = sightings_long,
+  control = glmerControl(optimizer = "bobyqa")
+)
+
+#Predicted values for m3.1_final_long over "YearBreakdown"
+preds3.1 <- ggpredict(m3.1_final_long, terms = c("YearBreakdown"))
+
+# Plot
+ggplot(preds3.1, aes(x = x, y = predicted)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, color = NA) +
+  scale_x_reverse(breaks = c(3, 2, 1)) +  # 3 years ago on left
+  labs(
+    title = "Predicted Probability of Being a Lactating Female\nby Years Since Intervention",
+    x = "Years Since Intervention",
+    y = "Probability of Being a Lactating Female",
+    color = "Years Ago",
+    fill = "Years Ago"
+  ) +
+  theme_minimal(base_size = 14) +
+  scale_color_viridis_d(option = "C", end = 0.9) +
+  scale_fill_viridis_d(option = "C", end = 0.9)
 
 ##Graph model 3.2
 
@@ -175,10 +237,16 @@ ggplot(preds3.2, aes(x = x, y = predicted, color = group)) +
   geom_line(size = 1) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.2, color = NA) +
   labs(
-    title = "Predicted Probability of Being a Puppy by Time Since Intervention and Subdistrict",
+    title = "Predicted Probability of Being a Puppy by\n Time Since Intervention and Subdistrict",
     x = "Years Since Intervention",
     y = "Probability of Being a Puppy",
     color = "Subdistrict",
-    fill = "Subdistrict"
-  ) +
-  theme_minimal()
+    fill = "Subdistrict") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  scale_color_viridis_d(option = "C", end = 0.9) +
+  scale_fill_viridis_d(option = "C", end = 0.9)

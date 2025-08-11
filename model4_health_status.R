@@ -89,17 +89,95 @@ testZeroInflation(simulationOutput_model4)
 ##Graph model
 
 # Get predicted values over 'sex' and 'subdistrict'
-preds4 <- ggpredict(m4_final, terms = c("sex", "subdistrict")) #create predicted values over variables "since_intervention" and "subdistrict"
+preds4sex <- ggpredict(m4_final, terms = c("sex", "subdistrict")) 
 
 # Plot predicted data
-ggplot(preds4, aes(x = x, y = predicted, color = group)) + #plot predicted data as the response variable, with group (meaning subdistrict) identified by colour
-  geom_line(size = 1) + 
-  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.2, color = NA) + 
+
+ggplot(preds4sex, aes(x = x,
+                   y = predicted,
+                   fill = group)) +
+  geom_col(position = position_dodge(width = 0.5), width = 0.6) +
+  geom_errorbar(aes(ymin = conf.low,
+                    ymax = conf.high),
+                position = position_dodge(width = 0.5),
+                width = 0.2) +
+  scale_x_discrete(labels = c("Female", "Male")) +
   labs(
-    title = "Predicted Probability of Being Healthy by Time Since Intervention and Subdistrict",
-    x = "Days Since Intervention",
+    title = "Predicted Probability of Being Healthy\nby Sex and Subdistrict",
+    x     = "Sex",
+    y     = "Predicted Probability",
+    fill  = "Subdistrict"
+  ) +
+  theme_minimal(base_size = 14) +
+  scale_fill_viridis_d(option = "C", end = 0.9)
+
+
+
+# Get predicted values over 'age' and 'subdistrict'
+preds4age <- ggpredict(m4_final, terms = c("age", "subdistrict")) 
+
+# Plot predicted data 
+
+ggplot(preds4age, aes(x = x,y = predicted,
+                      fill = group)) +
+  geom_col(position = position_dodge(width = 0.5), width = 0.6) +
+  geom_errorbar(aes(ymin = conf.low,
+                    ymax = conf.high),
+                position = position_dodge(width = 0.5),
+                width = 0.2) +
+  scale_x_discrete(labels = c("Puppy", "Adult")) +
+  labs(
+    title = "Predicted Probability of Being Healthy\nby Age and Subdistrict",
+    x     = "Age",
+    y     = "Predicted Probability",
+    fill  = "Subdistrict"
+  ) +
+  theme_minimal(base_size = 14) +
+  scale_fill_viridis_d(option = "C", end = 0.9)
+
+
+
+
+# Get predicted values over years and 'subdistrict'
+
+#Reformat data
+sightings_long <- sightings %>%
+  pivot_longer(
+    cols = c(last3y_humanpop, last2y_humanpop, last1y_humanpop),
+    names_to = "YearBreakdown",
+    values_to = "sterilization_effort"
+  ) %>%
+  mutate(
+    YearBreakdown = case_when(
+      YearBreakdown == "last3y_humanpop" ~ 3,
+      YearBreakdown == "last2y_humanpop" ~ 2,
+      YearBreakdown == "last1y_humanpop" ~ 1
+    )
+  )
+
+#Refit model
+m4_final_long <- glmer(
+  Healthy ~ sterilization_effort * YearBreakdown + subdistrict + (1 | polygon),
+  family = binomial,
+  data = sightings_long,
+  control = glmerControl(optimizer = "bobyqa")
+)
+
+#Predicted values for m3.1_final_long over "YearBreakdown"
+preds4 <- ggpredict(m3.1_final_long, terms = c("YearBreakdown"))
+
+# Plot
+ggplot(preds4, aes(x = x, y = predicted)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, color = NA) +
+  scale_x_reverse(breaks = c(3, 2, 1)) +  # 3 years ago on left
+  labs(
+    title = "Predicted Probability of Being Healthy \nby Years Since Intervention",
+    x = "Years Since Intervention",
     y = "Probability of Being Healthy",
     color = "Subdistrict",
     fill = "Subdistrict"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 14) +
+  scale_color_viridis_d(option = "C", end = 0.9) +
+  scale_fill_viridis_d(option = "C", end = 0.9)
