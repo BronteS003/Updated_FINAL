@@ -237,7 +237,8 @@ p1 <-ggplot(preds1, aes(x = x, y = predicted, colour = group)) +
     legend.position = "right",
     axis.text = element_text(color = "gray30"),
     panel.grid.minor = element_blank()) +
-  scale_color_viridis_d(option = "C", end = 0.9)
+  scale_color_viridis_d(option = "C", end = 0.9) +
+  scale_fill_viridis_d(option = "C", end = 0.9)
 
 
 # Get predicted values over time since intervention
@@ -256,7 +257,8 @@ p2 <- ggplot(preds1.1, aes(x = x, y = predicted, colour = group)) +
     legend.position = "right",
     axis.text = element_text(color = "gray30"),
     panel.grid.minor = element_blank()) +
-  scale_color_viridis_d(option = "C", end = 0.9)
+  scale_color_viridis_d(option = "C", end = 0.9) +
+  scale_fill_viridis_d(option = "C", end = 0.9)
 
 #Combine into one panel with a shared legend
 p1 + p2 + plot_layout(guides = "collect")
