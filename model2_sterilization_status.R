@@ -19,7 +19,7 @@ library(ggeffects) #creating predicted values and visualizing them
 library(lmtest) #conducting likelihood ratio tests
 library(car) #check for multicollinearity
 library(performance)
-
+library(emmeans)
 
 ##IMPORT DATA##
 
@@ -73,6 +73,8 @@ m2_year_final <- glmer(Neutered ~ last3y_humanpop + last2y_humanpop + last1y_hum
 #Compare three sterilization effort indicators
 AIC(m2_since_final, m2_total_final, m2_year_final) #year model has the lowest AIC
 
+#Conduct posthoc test
+emmeans(m2_year_final,pairwise ~ sex) #none of the interactions are significant, does this means we should drop sex?
 
 ##CHECK FOR OVERDISPERSION##
 
@@ -141,3 +143,6 @@ ggplot(preds_sex, aes(x = x, y = predicted, fill = group)) +
     fill = "Subdistrict"
   ) +
   theme_minimal()
+
+##PLOTTING MODELS##
+
