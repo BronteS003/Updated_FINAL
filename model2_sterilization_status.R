@@ -203,4 +203,8 @@ g3 <- ggplot(preds2, aes(x = x, y = predicted, color = group, fill = group)) +
 #Combine into one panel 
 g1 + g2 + g3
 
+#Identify exact data points from the plot
+plot_data <- ggplot_build(g3)$data
+plot_data
+
 

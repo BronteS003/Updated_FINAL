@@ -19,6 +19,7 @@ library(ggeffects) #creating predicted values and visualizing them
 library(lmtest) #conducting likelihood ratio tests
 library(tidyr)
 library(patchwork)
+library(emmeans)
 
 ##IMPORT DATA##
 

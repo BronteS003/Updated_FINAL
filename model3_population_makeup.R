@@ -184,6 +184,8 @@ testZeroInflation(simulationOutput_model3.2)
 
 
 ##Graph model 3.1
+
+
 # Reshape intervention by years
 sightings_long <- sightings %>%
   pivot_longer(
@@ -233,12 +235,44 @@ ggplot(preds3.1, aes(x = x, y = predicted)) +
 
 ##Graph model 3.2
 
+#Plot puppies by ownership status
+
+# Get predicted values over "owned" and "subdistrict"
+preds_owned <- ggpredict(m3.2_since_final, terms = c("owned", "subdistrict"))
+
+# Plot Probability of Being Neutered by Sterilizations ownership status and subdistrict
+g1 <- ggplot(preds_owned, aes(x = x,
+                              y = predicted,
+                              fill = group)) +
+  geom_col(position = position_dodge(width = 0.5), width = 0.6) +
+  geom_errorbar(aes(ymin = conf.low,
+                    ymax = conf.high),
+                position = position_dodge(width = 0.5),
+                width = 0.2) +
+  scale_x_discrete(labels = c("Yes", "No")) +
+  labs(
+    title = "Predicted Probability of Being a Puppy\nby Ownership Status and Subdistrict",
+    x     = "Owned",
+    y     = "Predicted Probability",
+    fill  = "Subdistrict"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  scale_color_viridis_d(option = "C", end = 0.9) +
+  scale_fill_viridis_d(option = "C", end = 0.9)
+
+
+
 # Get predicted values over 'since_intervention'and 'subdistrict'
 preds3.2 <- ggpredict(m3.2_since_final, terms = c("since_intervention", "subdistrict"))
 
 # Plot
-ggplot(preds3.2, aes(x = x, y = predicted, color = group)) +
-  geom_line(size = 1) +
+g2 <- ggplot(preds3.2, aes(x = x, y = predicted, color = group)) +
+  geom_line(linewidth = 1) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.2, color = NA) +
   labs(
     title = "Predicted Probability of Being a Puppy by\n Time Since Intervention and Subdistrict",
@@ -254,3 +288,6 @@ ggplot(preds3.2, aes(x = x, y = predicted, color = group)) +
     panel.grid.minor = element_blank()) +
   scale_color_viridis_d(option = "C", end = 0.9) +
   scale_fill_viridis_d(option = "C", end = 0.9)
+
+#Add graphs to panel
+g1 + g2
