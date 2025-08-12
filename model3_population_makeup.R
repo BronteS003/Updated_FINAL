@@ -17,6 +17,7 @@ library(RVAideMemoire) #checking for overdispersion
 library(DHARMa) #checking overdispersion visually
 library(ggeffects) #creating predicted values and visualizing them
 library(lmtest) #conducting likelihood ratio tests
+library(tidyr)
 
 ##IMPORT DATA##
 
@@ -184,8 +185,6 @@ testZeroInflation(simulationOutput_model3.2)
 
 ##Graph model 3.1
 # Reshape intervention by years
-library(tidyr)
-
 sightings_long <- sightings %>%
   pivot_longer(
     cols = c(last3y_humanpop, last2y_humanpop, last1y_humanpop),
@@ -217,13 +216,18 @@ ggplot(preds3.1, aes(x = x, y = predicted)) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, color = NA) +
   scale_x_reverse(breaks = c(3, 2, 1)) +  # 3 years ago on left
   labs(
-    title = "Predicted Probability of Being a Lactating Female\nby Years Since Intervention",
-    x = "Years Since Intervention",
+    title = "Predicted Probability of Being a Lactating Female by Years",
+    x = "Years Ago",
     y = "Probability of Being a Lactating Female",
     color = "Years Ago",
     fill = "Years Ago"
   ) +
   theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
   scale_color_viridis_d(option = "C", end = 0.9) +
   scale_fill_viridis_d(option = "C", end = 0.9)
 

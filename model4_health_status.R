@@ -17,6 +17,8 @@ library(RVAideMemoire) #checking for overdispersion
 library(DHARMa) #checking overdispersion visually
 library(ggeffects) #creating predicted values and visualizing them
 library(lmtest) #conducting likelihood ratio tests
+library(tidyr)
+library(patchwork)
 
 ##IMPORT DATA##
 
@@ -92,8 +94,7 @@ testZeroInflation(simulationOutput_model4)
 preds4sex <- ggpredict(m4_final, terms = c("sex", "subdistrict")) 
 
 # Plot predicted data
-
-ggplot(preds4sex, aes(x = x,
+g1 <- ggplot(preds4sex, aes(x = x,
                    y = predicted,
                    fill = group)) +
   geom_col(position = position_dodge(width = 0.5), width = 0.6) +
@@ -109,6 +110,12 @@ ggplot(preds4sex, aes(x = x,
     fill  = "Subdistrict"
   ) +
   theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  scale_color_viridis_d(option = "C", end = 0.9) +
   scale_fill_viridis_d(option = "C", end = 0.9)
 
 
@@ -118,7 +125,7 @@ preds4age <- ggpredict(m4_final, terms = c("age", "subdistrict"))
 
 # Plot predicted data 
 
-ggplot(preds4age, aes(x = x,y = predicted,
+g2 <- ggplot(preds4age, aes(x = x,y = predicted,
                       fill = group)) +
   geom_col(position = position_dodge(width = 0.5), width = 0.6) +
   geom_errorbar(aes(ymin = conf.low,
@@ -133,14 +140,20 @@ ggplot(preds4age, aes(x = x,y = predicted,
     fill  = "Subdistrict"
   ) +
   theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  scale_color_viridis_d(option = "C", end = 0.9) +
   scale_fill_viridis_d(option = "C", end = 0.9)
 
 
 
 
-# Get predicted values over years and 'subdistrict'
+# Get predicted values over years and subdistrict
 
-#Reformat data
+# Reshape intervention by years
 sightings_long <- sightings %>%
   pivot_longer(
     cols = c(last3y_humanpop, last2y_humanpop, last1y_humanpop),
@@ -157,27 +170,34 @@ sightings_long <- sightings %>%
 
 #Refit model
 m4_final_long <- glmer(
-  Healthy ~ sterilization_effort * YearBreakdown + subdistrict + (1 | polygon),
+  Neutered ~ sterilization_effort * YearBreakdown + subdistrict + (1 | polygon),
   family = binomial,
   data = sightings_long,
   control = glmerControl(optimizer = "bobyqa")
 )
 
-#Predicted values for m3.1_final_long over "YearBreakdown"
-preds4 <- ggpredict(m3.1_final_long, terms = c("YearBreakdown"))
+#Predicted values for m4_final_long over "YearBreakdown" and "subdistrict"
+preds4 <- ggpredict(m4_final_long, terms = c("YearBreakdown", "subdistrict"))
 
 # Plot
-ggplot(preds4, aes(x = x, y = predicted)) +
-  geom_line(size = 1) +
+g3 <- ggplot(preds4, aes(x = x, y = predicted, color = group, fill = group)) +
+  geom_line(linewidth = 1) +  
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, color = NA) +
-  scale_x_reverse(breaks = c(3, 2, 1)) +  # 3 years ago on left
+  scale_x_reverse(breaks = c(3,2,1)) +
   labs(
-    title = "Predicted Probability of Being Healthy \nby Years Since Intervention",
-    x = "Years Since Intervention",
+    title = "Predicted Probability of Being Healthy\nby Year",
+    x = "Years Ago",
     y = "Probability of Being Healthy",
     color = "Subdistrict",
     fill = "Subdistrict"
   ) +
   theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
   scale_color_viridis_d(option = "C", end = 0.9) +
   scale_fill_viridis_d(option = "C", end = 0.9)
+#Combine plots into 1 panel
+g1 + g2 + g3

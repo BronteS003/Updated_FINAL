@@ -20,6 +20,7 @@ library(lmtest) #conducting likelihood ratio tests
 library(car) #check for multicollinearity
 library(performance)
 library(emmeans)
+library(patchwork)
 
 ##IMPORT DATA##
 
@@ -92,57 +93,114 @@ testZeroInflation(simulationOutput_model2)
 
 ##PLOT MODELS##
 
-#Trying to figure out how to plot this in a way that makes sense
-
-# Get predicted values over 'last3y_humanpop'and 'subdistrict'
-preds_3y <- ggpredict(m2_year_final, terms = c("last3y_humanpop", "subdistrict"))
-
-# Plot Probability of Being Neutered by Sterilizations 3 years ago and subdistrict
-ggplot(preds_3y, aes(x = x, y = predicted, color = group)) +
-  geom_line(size = 1) +
-  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.2, color = NA) +
-  labs(
-    title = "Predicted Probability of Being Neutered by Sterilization Effort (3 years ago) and Subdistrict",
-    x = "Sterilization Effort",
-    y = "Probability of Being Neutered",
-    color = "Subdistrict",
-    fill = "Subdistrict"
-  ) +
-  theme_minimal()
-
-
 # Get predicted values over "owned" and "subdistrict"
 preds_owned <- ggpredict(m2_year_final, terms = c("owned", "subdistrict"))
 
 # Plot Probability of Being Neutered by Sterilizations ownership status and subdistrict
-ggplot(preds_owned, aes(x = x, y = predicted, fill = group)) +
-  geom_boxplot(stat = "identity", position = position_dodge()) +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), 
-                position = position_dodge(0.9), width = 0.2) +
+g1 <- ggplot(preds_owned, aes(x = x,
+                      y = predicted,
+                      fill = group)) +
+  geom_col(position = position_dodge(width = 0.5), width = 0.6) +
+  geom_errorbar(aes(ymin = conf.low,
+                    ymax = conf.high),
+                position = position_dodge(width = 0.5),
+                width = 0.2) +
+  scale_x_discrete(labels = c("Yes", "No")) +
   labs(
-    title = "Predicted Probability of Being Neutered by Ownership Status and Subdistrict",
-    x = "Owned",
-    y = "Probability of Being Neutered",
-    fill = "Subdistrict"
+    title = "Predicted Probability of Being Neutered\nby Ownership Status and Subdistrict",
+    x     = "Owned",
+    y     = "Predicted Probability",
+    fill  = "Subdistrict"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  scale_color_viridis_d(option = "C", end = 0.9) +
+  scale_fill_viridis_d(option = "C", end = 0.9)
+
 
 
 # Get predicted values over "sex" and "subdistrict"
 preds_sex <- ggpredict(m2_year_final, terms = c("sex", "subdistrict"))
 
-# Plot Probability of Being Neutered by Sterilizations ownership status and subdistrict
-ggplot(preds_sex, aes(x = x, y = predicted, fill = group)) +
-  geom_bar(stat = "identity", position = position_dodge()) +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), 
-                position = position_dodge(0.9), width = 0.2) +
+# Plot Probability of Being Neutered by sex and subdistrict
+g2 <- ggplot(subset(preds_sex, group != "unknown"), aes(x = x,
+                                                  y = predicted,
+                                                  fill = group)) +
+  geom_col(position = position_dodge(width = 0.5), width = 0.6) +
+  geom_errorbar(aes(ymin = conf.low,
+                    ymax = conf.high),
+                position = position_dodge(width = 0.5),
+                width = 0.2) +
+  scale_x_discrete(labels = c("Female", "Male")) +
   labs(
-    title = "Predicted Probability of Being Neutered by Ownership Status and Subdistrict",
-    x = "Sex",
+    title = "Predicted Probability of Being Neutered\nby Sex and Subdistrict",
+    x     = "Sex",
+    y     = "Predicted Probability",
+    fill  = "Subdistrict"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  scale_color_viridis_d(option = "C", end = 0.9) +
+  scale_fill_viridis_d(option = "C", end = 0.9)
+
+#create final graph for sterilization by years
+
+# Reshape intervention by years
+sightings_long <- sightings %>%
+  pivot_longer(
+    cols = c(last3y_humanpop, last2y_humanpop, last1y_humanpop),
+    names_to = "YearBreakdown",
+    values_to = "sterilization_effort"
+  ) %>%
+  mutate(
+    YearBreakdown = case_when(
+      YearBreakdown == "last3y_humanpop" ~ 3,
+      YearBreakdown == "last2y_humanpop" ~ 2,
+      YearBreakdown == "last1y_humanpop" ~ 1
+    )
+  )
+
+#Refit model
+m2_final_long <- glmer(
+  Neutered ~ sterilization_effort * YearBreakdown + subdistrict + (1 | polygon),
+  family = binomial,
+  data = sightings_long,
+  control = glmerControl(optimizer = "bobyqa")
+)
+
+#Predicted values for m2_final_long over "YearBreakdown" and "subdistrict"
+preds2 <- ggpredict(m2_final_long, terms = c("YearBreakdown", "subdistrict"))
+
+# Plot
+g3 <- ggplot(preds2, aes(x = x, y = predicted, color = group, fill = group)) +
+  geom_line(linewidth = 1) +  
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, color = NA) +
+  scale_x_reverse(breaks = c(3, 2, 1)) +
+  labs(
+    title = "Predicted Probability of Being Neutered\nby Year",
+    x = "Years Ago",
     y = "Probability of Being Neutered",
+    color = "Subdistrict",
     fill = "Subdistrict"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  scale_color_viridis_d(option = "C", end = 0.9) +
+  scale_fill_viridis_d(option = "C", end = 0.9)
 
-##PLOTTING MODELS##
+#Combine into one panel 
+g1 + g2 + g3
+
 
