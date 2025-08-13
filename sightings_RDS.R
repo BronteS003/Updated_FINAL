@@ -130,7 +130,7 @@ sightings <- na.omit(sightings)
 
 #Import data set "clinic data"
 clinic_data <- read_csv("clinic_data .csv")
-View(clinic_data)
+# View(clinic_data)
 
 #Define "subdistrict" as factor
 clinic_data <- clinic_data %>%
@@ -185,6 +185,18 @@ sightings <- sightings %>%
         KK_TC_Clinic$date_admission >= date - years(2) &
         (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
     ),
+    effort_3y_ago = sum(
+      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
+        KK_TC_Clinic$date_admission < date - years(2) &
+        KK_TC_Clinic$date_admission >= date - years(3) &
+        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
+    ),
+    effort_2y_ago = sum(
+      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
+        KK_TC_Clinic$date_admission < date - years(1) &
+        KK_TC_Clinic$date_admission >= date - years(2) &
+        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
+    ),
     effort_last_1y = sum(
       as.character(KK_TC_Clinic$subdistrict) == subdistrict &
         KK_TC_Clinic$date_admission < date &
@@ -217,6 +229,20 @@ sightings <- sightings %>%
   mutate(last1y_humanpop = case_when(
     subdistrict == "KK" ~ effort_last_1y/3000,
     subdistrict == "TC" ~ effort_last_1y/4938))
+
+#Create total sterilization effort 3 years ago by human population
+sightings <- sightings %>%
+  mutate(three_years_ago_humanpop = case_when(
+    subdistrict == "KK" ~ effort_3y_ago/3000,
+    subdistrict == "TC" ~ effort_3y_ago/4938))
+
+#Create total sterilization effort 2 years ago by human population
+sightings <- sightings %>%
+  mutate(two_years_ago_humanpop = case_when(
+    subdistrict == "KK" ~ effort_2y_ago/3000,
+    subdistrict == "TC" ~ effort_2y_ago/4938))
+
+
 
 #Save RDS
 

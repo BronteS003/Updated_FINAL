@@ -19,7 +19,7 @@ library(stringr) #manipulating text
 
 #Import data set "dog_density"
 dog_density <- read.csv("final_dog_density.csv") #import data set and name it "dog_density"
-View(dog_density)#view data set
+# View(dog_density)#view data set
 
 #Rename columns
 dog_density <- dog_density %>% rename("polygon" = "Sandbox.Name", #rename so easier to remember
@@ -104,7 +104,7 @@ dog_density <- dog_density %>%
 
 #Import data set "clinic data"
 clinic_data <- read_csv("clinic_data .csv")
-View(clinic_data)
+# View(clinic_data)
 
 #Define "subdistrict" as factor
 clinic_data <- clinic_data %>%
@@ -164,7 +164,20 @@ dog_density <- dog_density %>%
         KK_TC_Clinic$date_admission < date &
         KK_TC_Clinic$date_admission >= date - years(1) &
         (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
+    ),
+    effort_3y_ago = sum(
+      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
+        KK_TC_Clinic$date_admission < date - years(2) &
+        KK_TC_Clinic$date_admission >= date - years(3) &
+        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
+    ),
+    effort_2y_ago = sum(
+      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
+        KK_TC_Clinic$date_admission < date - years(1) &
+        KK_TC_Clinic$date_admission >= date - years(2) &
+        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
     )
+    
   ) %>%
   ungroup()
 
@@ -191,6 +204,20 @@ dog_density <- dog_density %>%
   mutate(last1y_humanpop = case_when(
     subdistrict == "KK" ~ effort_last_1y/3000,
     subdistrict == "TC" ~ effort_last_1y/4938))
+
+#Create total sterilization effort 3 years ago by human population
+dog_density <- dog_density %>%
+  mutate(three_years_ago_humanpop = case_when(
+    subdistrict == "KK" ~ effort_3y_ago/3000,
+    subdistrict == "TC" ~ effort_3y_ago/4938))
+
+#Create total sterilization effort 2 years ago by human population
+dog_density <- dog_density %>%
+  mutate(two_years_ago_humanpop = case_when(
+    subdistrict == "KK" ~ effort_2y_ago/3000,
+    subdistrict == "TC" ~ effort_2y_ago/4938))
+
+
 
 ##Save as objects
 
