@@ -55,6 +55,9 @@ m1_since_intervention <- glmer(Sighting.Count ~ since_intervention + Track.Lengt
                         offset(log(Track.Length)), 
                       family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 
+# Check variance inflation factors
+vif(m1_since_intervention) # all fine
+
 #Test what variables should be dropped
 drop1(m1_since_intervention, test="Chisq")
 
@@ -76,11 +79,14 @@ m1_2.since_intervention <- glmer(Sighting.Count ~ since_intervention + subdistri
 #Test what variables should be dropped
 drop1(m1_2.since_intervention, test="Chisq")
 
-##All remaining variables are significant
+# Dropping Track.Length
 final_since_intervention <- glmer(Sighting.Count ~ since_intervention + subdistrict +
                                     (1 | polygon/survey) +
                                     offset(log(Track.Length)), 
                                   family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+
+##All remaining variables are significant
+drop1(final_since_intervention, test="Chisq")
 
 
 #Total Sterilization Effort
@@ -90,6 +96,10 @@ m1_effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + Track.Length + su
                                  (1 | polygon/survey) +
                                  offset(log(Track.Length)), 
                                family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+
+# Check variance inflation factors
+vif(m1_effort_humanpop) # all fine
+
 #Test what variables should be dropped
 drop1(m1_effort_humanpop, test="Chisq")
 
@@ -135,10 +145,23 @@ m1_effort_final <- glmer(Sighting.Count ~ effort_humanpop + subdistrict +
 ##Sterilization by Year##
 
 #Most complex m1 using years
-m1_year <- glmer(Sighting.Count ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
+m1_year <- glmer(Sighting.Count ~ three_years_ago_humanpop + two_years_ago_humanpop + last1y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
                               (1 | polygon/survey) +
                               offset(log(Track.Length)), 
                             family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+
+# Check variance inflation factors
+vif(m1_year) # problems with the effort variables - all have VIF>5
+
+# Remove variable with the highest VIF
+m1_year <- glmer(Sighting.Count ~ three_years_ago_humanpop + last1y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
+                   (1 | polygon/survey) +
+                   offset(log(Track.Length)), 
+                 family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+
+# Check variance inflation factors
+vif(m1_year) # all ok now - can move on to backward selection using drop 1
+
 #Test what variables should be dropped
 drop1(m1_year, test="Chisq")
 
