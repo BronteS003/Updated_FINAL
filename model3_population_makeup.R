@@ -25,6 +25,15 @@ library(tidyr)
 
 sightings <- readRDS("sightings.rds", refhook = NULL)
 
+##CLEAN DATA##
+#Remove puppies as they're not relevant to analysis
+sightings <- sightings %>% 
+  filter(Puppy != 1)
+
+#Remove males
+sightings <- sightings %>% 
+  filter(Adult.male != 1)
+
 ##MODEL SELECTION (Sightings) - Lactating Females##
 
 #Time since intervention
@@ -33,6 +42,7 @@ sightings <- readRDS("sightings.rds", refhook = NULL)
 m3.1_since <- glmer(Adult.Lactating.female ~ since_intervention + owned + subdistrict +
                     (1 | polygon),
                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m3.1_since)#all fine
 drop1(m3.1_since, test = "Chisq") 
 
 #Create updated model dropping owned
@@ -41,8 +51,8 @@ m3.1_1since <- glmer(Adult.Lactating.female ~ since_intervention + subdistrict +
                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 drop1(m3.1_1since, test = "Chisq") 
 
-#Create updated model dropping subdistrict
-m3.1_2since <- glmer(Adult.Lactating.female ~ since_intervention +
+#Create updated model dropping since_intervention
+m3.1_2since <- glmer(Adult.Lactating.female ~ subdistrict +
                        (1 | polygon),
                      family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 drop1(m3.1_2since, test = "Chisq") #None of the variables are significant
@@ -55,16 +65,17 @@ drop1(m3.1_2since, test = "Chisq") #None of the variables are significant
 m3.1_effort <- glmer(Adult.Lactating.female ~ effort_humanpop + owned + subdistrict +
                       (1 | polygon),
                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m3.1_effort)#all fine
 drop1(m3.1_effort, test = "Chisq") 
 
-#Create updated model dropping owned
-m3.1_1effort <- glmer(Adult.Lactating.female ~ effort_humanpop + subdistrict +
+#Create updated model dropping effort
+m3.1_1effort <- glmer(Adult.Lactating.female ~ owned + subdistrict +
                        (1 | polygon),
                      family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 drop1(m3.1_1effort, test = "Chisq") 
 
-#Create updated model dropping subdistrict
-m3.1_2effort <- glmer(Adult.Lactating.female ~ effort_humanpop +
+#Create updated model dropping owned
+m3.1_2effort <- glmer(Adult.Lactating.female ~ owned +
                         (1 | polygon),
                       family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 drop1(m3.1_2effort, test = "Chisq") #None of the variables are significant
@@ -73,31 +84,133 @@ drop1(m3.1_2effort, test = "Chisq") #None of the variables are significant
 #Effort by year
 
 #Most complex model, lactating females by effort annually
-m3.1_year <- glmer(Adult.Lactating.female ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + owned + subdistrict +
+m3.1_year <- glmer(Adult.Lactating.female ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + owned + subdistrict +
                        (1 | polygon),
                      family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m3.1_year) #drop effort 2y
+m3.1_year <- glmer(Adult.Lactating.female ~ effort_3y_humanpop + effort_1y_humanpop + owned + subdistrict +
+                     (1 | polygon),
+                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m3.1_year) #all now fine
+
+#Check which variable to drop
 drop1(m3.1_year, test = "Chisq") 
 
-#Create updated model dropping subdistrict
-m3.1_1year <- glmer(Adult.Lactating.female ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + owned +
+#Create updated model dropping owned
+m3.1_1year<- glmer(Adult.Lactating.female ~ effort_3y_humanpop + effort_1y_humanpop + subdistrict +
                      (1 | polygon),
                    family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 drop1(m3.1_1year, test = "Chisq") 
 
-#Create updated model dropping owned
-m3.1_2year <- glmer(Adult.Lactating.female ~ last3y_humanpop + last2y_humanpop + last1y_humanpop +
+#Create updated model dropping effort 1y
+m3.1_2year <- glmer(Adult.Lactating.female ~ effort_3y_humanpop + subdistrict +
                       (1 | polygon),
                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 drop1(m3.1_2year, test = "Chisq") 
 
+#Create updated model dropping subdistrict
+m3.1_3year <- glmer(Adult.Lactating.female ~ effort_3y_humanpop +
+                      (1 | polygon),
+                    family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.1_3year, test = "Chisq") 
+
 
 #Final model - lactating females
-m3.1_final <- glmer(Adult.Lactating.female ~ last3y_humanpop + last2y_humanpop + last1y_humanpop +
-                                 (1 | polygon),
-                               family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+m3.1_final <- glmer(Adult.Lactating.female ~ effort_3y_humanpop +
+                      (1 | polygon),
+                    family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+
+
+
+
+
+
+
+
+
+##MODEL SELECTION (SUMMARY) - LACTATING FEMALES##
+#Read rds for sightings file
+
+summary_data <- readRDS("dog_density.rds", refhook = NULL)
+
+##CLEAN DATA##
+#Remove puppies as they're not relevant to analysis
+summary_data$Puppy <- NULL
+
+#Remove males
+summary_data$Adult.male <- NULL
+
+##MODEL SELECTION (Sightings) - Lactating Females##
+
+#Time since intervention
+
+#Most complex model, lactating females by time since intervention
+m3.1_since <- glmer(Adult.Lactating.female ~ since_intervention + Owned + subdistrict +
+                      (1 | polygon/survey),
+                    family = poisson, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+vif(m3.1_since)#all fine
+drop1(m3.1_since, test = "Chisq") 
+
+
+#Total Effort
+
+#Most complex model, lactating females by total sterilization effort
+m3.1_effort <- glmer(Adult.Lactating.female ~ effort_humanpop+ Owned + subdistrict +
+                       (1 | polygon/survey),
+                     family = poisson, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+vif(m3.1_effort)#all fine
+drop1(m3.1_effort, test = "Chisq") 
+
+#Create updated model dropping subdistrict
+m3.1_1effort <- glmer(Adult.Lactating.female ~ effort_humanpop + Owned +
+                        (1 | polygon/survey),
+                      family = poisson, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.1_1effort, test = "Chisq") 
+
+
+#Effort by year
+
+#Most complex model, lactating females by effort annually
+m3.1_year <- glmer(Adult.Lactating.female ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + Owned + subdistrict +
+                     (1 | polygon/survey),
+                   family = poisson, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+vif(m3.1_year) #drop effort 1y
+m3.1_year <- glmer(Adult.Lactating.female ~ effort_3y_humanpop + effort_2y_humanpop + Owned + subdistrict +
+                     (1 | polygon/survey),
+                   family = poisson, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+vif(m3.1_year) #all now fine
+
+#Check which variable to drop
+drop1(m3.1_year, test = "Chisq") 
+
+#Create updated model dropping subdistrict
+m3.1_1year <- glmer(Adult.Lactating.female ~ effort_3y_humanpop + effort_2y_humanpop + Owned +
+                     (1 | polygon/survey),
+                   family = poisson, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.1_1year, test = "Chisq") 
+
+#Create updated model dropping effort 2y
+m3.1_2year <- glmer(Adult.Lactating.female ~ effort_3y_humanpop + Owned +
+                      (1 | polygon/survey),
+                    family = poisson, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.1_2year, test = "Chisq") 
+
+#Create updated model dropping owned
+m3.1_3year <- glmer(Adult.Lactating.female ~ effort_3y_humanpop +
+                      (1 | polygon/survey),
+                    family = poisson, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.1_3year, test = "Chisq") 
+
+
+
+
+
 
 
 ##MODEL SELECTION (sightings) - Puppies##
+
+#Reload fresh version of sightings file
+sightings <- readRDS("sightings.rds", refhook = NULL)
 
 #Time since intervention
 
@@ -105,12 +218,20 @@ m3.1_final <- glmer(Adult.Lactating.female ~ last3y_humanpop + last2y_humanpop +
 m3.2_since <- glmer(Puppy ~ since_intervention + owned + subdistrict +
                       (1 | polygon),
                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m3.2_since)
 drop1(m3.2_since, test = "Chisq")
 
-#Final model for time since intervention 
-m3.2_since_final <- glmer(Puppy ~ since_intervention + owned + subdistrict +
+#Updated model dropping owned
+m3.2_1since <- glmer(Puppy ~ since_intervention + subdistrict +
                       (1 | polygon),
                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.2_1since, test = "Chisq")
+
+#Updated model dropping subdistrict
+m3.2_1since <- glmer(Puppy ~ since_intervention +
+                       (1 | polygon),
+                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.2_1since, test = "Chisq")
 
 
 #Total Effort
@@ -119,45 +240,69 @@ m3.2_since_final <- glmer(Puppy ~ since_intervention + owned + subdistrict +
 m3.2_effort <- glmer(Puppy ~ effort_humanpop + owned + subdistrict +
                        (1 | polygon),
                      family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-drop1(m3.2_effort, test = "Chisq") 
+vif(m3.2_effort)
+drop1(m3.2_effort, test = "Chisq")
+
+#Drop owned
+m3.2_1effort <- glmer(Puppy ~ effort_humanpop + subdistrict +
+                       (1 | polygon),
+                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.2_1effort, test = "Chisq")
+
+#Drop subdistrict
+m3.2_2effort <- glmer(Puppy ~ effort_humanpop +
+                        (1 | polygon),
+                      family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.2_2effort, test = "Chisq")
 
 #Final model, puppies by total sterilization effort
-m3.2_effort_final <- glmer(Puppy ~ effort_humanpop + owned + subdistrict +
+m3.2_effort_final <- glmer(Puppy ~ effort_humanpop +
                        (1 | polygon),
                      family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 
 #Effort by year
 
 #Most complex model, puppy by effort annually
-m3.2_year <- glmer(Puppy ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + owned + subdistrict +
+m3.2_year <- glmer(Puppy ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + owned + subdistrict +
                      (1 | polygon),
                    family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m3.2_year) #drop effort 2y
+m3.2_year <- glmer(Puppy ~ effort_3y_humanpop + effort_1y_humanpop + owned + subdistrict +
+                     (1 | polygon),
+                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m3.2_year) #all good
 drop1(m3.2_year, test = "Chisq") 
 
-#Updated model dropping last 1 year
-m3.2_1year <- glmer(Puppy ~ last3y_humanpop + last2y_humanpop + owned + subdistrict +
-                     (1 | polygon),
-                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-drop1(m3.2_1year, test = "Chisq") 
-
-#Updated model dropping last 2 year
-m3.2_2year <- glmer(Puppy ~ last3y_humanpop + owned + subdistrict +
+#Updated model dropping effort 1
+m3.2_1year <- glmer(Puppy ~ effort_3y_humanpop + owned + subdistrict +
                       (1 | polygon),
                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.2_1year, test = "Chisq") 
+
+#Updated model dropping subdistrict
+m3.2_2year  <- glmer(Puppy ~ effort_3y_humanpop + owned +
+                       (1 | polygon),
+                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m3.2_2year, test = "Chisq")
+
+#Updated model dropping owned
+m3.2_2year  <- glmer(Puppy ~ effort_3y_humanpop +
+                       (1 | polygon),
+                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 drop1(m3.2_2year, test = "Chisq")
 
 #Final model for year
-m3.2_year_final <- glmer(Puppy ~ last3y_humanpop + owned + subdistrict +
-                      (1 | polygon),
-                    family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+m3.2_year_final <- glmer(Puppy ~ effort_3y_humanpop +
+                           (1 | polygon),
+                         family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 
 #Compare all final models
-AIC(m3.2_since_final, m3.2_effort_final, m3.2_year_final) #nearly identical AICs, time since intervention marginally better
+AIC(m3.2_effort_final, m3.2_year_final) #year fits the model better
+
 
 
 
 ##Check for overdispersion
-#--------------------
 
 #Check residual deviance relative to degrees of freedom for model3.2
 overdisp.glmer(m3.1_final)
@@ -235,51 +380,17 @@ ggplot(preds3.1, aes(x = x, y = predicted)) +
 
 ##Graph model 3.2
 
-#Plot puppies by ownership status
-
-# Get predicted values over "owned" and "subdistrict"
-preds_owned <- ggpredict(m3.2_since_final, terms = c("owned", "subdistrict"))
-
-# Plot Probability of Being Neutered by Sterilizations ownership status and subdistrict
-g1 <- ggplot(preds_owned, aes(x = x,
-                              y = predicted,
-                              fill = group)) +
-  geom_col(position = position_dodge(width = 0.5), width = 0.6) +
-  geom_errorbar(aes(ymin = conf.low,
-                    ymax = conf.high),
-                position = position_dodge(width = 0.5),
-                width = 0.2) +
-  scale_x_discrete(labels = c("Yes", "No")) +
-  labs(
-    title = "Predicted Probability of Being a Puppy\nby Ownership Status and Subdistrict",
-    x     = "Owned",
-    y     = "Predicted Probability",
-    fill  = "Subdistrict"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    legend.position = "right",
-    axis.text = element_text(color = "gray30"),
-    panel.grid.minor = element_blank()) +
-  scale_color_viridis_d(option = "C", end = 0.9) +
-  scale_fill_viridis_d(option = "C", end = 0.9)
-
-
-
-# Get predicted values over 'since_intervention'and 'subdistrict'
-preds3.2 <- ggpredict(m3.2_since_final, terms = c("since_intervention", "subdistrict"))
+# Get predicted values over 'effort_3y_humanpop'
+preds3.2 <- ggpredict(m3.2_year_final, terms = c("effort_3y_humanpop"))
 
 # Plot
-g2 <- ggplot(preds3.2, aes(x = x, y = predicted, color = group)) +
+ggplot(preds3.2, aes(x = x, y = predicted)) +
   geom_line(linewidth = 1) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.2, color = NA) +
   labs(
-    title = "Predicted Probability of Being a Puppy by\n Time Since Intervention and Subdistrict",
-    x = "Years Since Intervention",
-    y = "Probability of Being a Puppy",
-    color = "Subdistrict",
-    fill = "Subdistrict") +
+    title = "Predicted Probability of Being a Puppy by\n Sterilization 3 Years Ago",
+    x = "Sterilization Effort (Per Capita)",
+    y = "Probability of Being a Puppy",) +
   theme_minimal(base_size = 14) +
   theme(
     plot.title = element_text(face = "bold", hjust = 0.5),
@@ -288,6 +399,3 @@ g2 <- ggplot(preds3.2, aes(x = x, y = predicted, color = group)) +
     panel.grid.minor = element_blank()) +
   scale_color_viridis_d(option = "C", end = 0.9) +
   scale_fill_viridis_d(option = "C", end = 0.9)
-
-#Add graphs to panel
-g1 + g2

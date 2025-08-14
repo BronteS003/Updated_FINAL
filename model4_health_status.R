@@ -25,7 +25,7 @@ library(emmeans)
 
 #Read rds for sightings file
 
-sightings <- readRDS("sightings.rds", refhook = NULL)
+summary_data <- readRDS("dog_density", refhook = NULL)
 
 
 ##Model Selection - Health Status (sightings)##
@@ -33,10 +33,23 @@ sightings <- readRDS("sightings.rds", refhook = NULL)
 #Time Since Intervention
 
 #Most complex model using time since intervention
-m4_since <- glmer(Healthy ~ since_intervention + owned + sex + age + Neutered + subdistrict +
-                      (1 | polygon),
-                    family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-drop1(m4_since, test = "Chisq")##None significantly improve the fit of the model 
+m4_since <- glmer(Healthy ~ since_intervention + Owned + sex + age + Neutered + subdistrict +
+                    (1 | polygon/survey),
+                    family = poisson, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+vif(m4_since)
+drop1(m4_since, test = "Chisq") 
+
+#Create updated model dropping subdistrict
+m4_1since <- glmer(Healthy ~ since_intervention + owned + sex + age + Neutered +
+                    (1 | polygon),
+                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_1since, test = "Chisq")
+
+#Create updated model dropping since_intervention
+m4_2since <- glmer(Healthy ~ owned + sex + age + Neutered +
+                     (1 | polygon),
+                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_2since, test = "Chisq")
 
 #Total Sterilization Effort
 
@@ -44,27 +57,33 @@ drop1(m4_since, test = "Chisq")##None significantly improve the fit of the model
 m4_total <- glmer(Healthy ~ effort_humanpop + owned + sex + age + Neutered + subdistrict +
                     (1 | polygon),
                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m4_total)
 drop1(m4_total, test = "Chisq") #None significantly improve the fit of the model
 
 #Sterilization Effort by Year
 
 #Most complex model using total sterilization effort
-m4_year <- glmer(Healthy ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + owned + sex + age + Neutered + subdistrict +
+m4_year <- glmer(Healthy ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + owned + sex + age + Neutered + subdistrict +
                     (1 | polygon),
                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-drop1(m4_year, test = "Chisq") #None significantly improve the fit of the model
+vif(m4_year)#drop effort 2y
+m4_year <- glmer(Healthy ~ effort_3y_humanpop + effort_1y_humanpop + owned + sex + age + Neutered + subdistrict +
+                   (1 | polygon),
+                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m4_year) #all fine now
+drop1(m4_year, test = "Chisq")
 
-#Updated model dropping neutered
-m4_1year <- glmer(Healthy ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + owned + sex + age + subdistrict +
+#Updated model dropping effort 1y
+m4_1year<- glmer(Healthy ~ effort_3y_humanpop + owned + sex + age + Neutered + subdistrict +
                    (1 | polygon),
                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 drop1(m4_1year, test = "Chisq")
 
-#Updated model dropping owned
-m4_2year <- glmer(Healthy ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + sex + age + subdistrict +
-                    (1 | polygon),
-                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-drop1(m4_2year, test = "Chisq")
+#Updated model dropping esubdistrict
+m4_1year<- glmer(Healthy ~ effort_3y_humanpop + owned + sex + age + Neutered +
+                   (1 | polygon),
+                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_1year, test = "Chisq")
 
 #Final model for health status
 m4_final <- glmer(Healthy ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + sex + age + subdistrict +
