@@ -111,29 +111,22 @@ m1_1.effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + Track.Length + 
 #Test what variables should be dropped
 drop1(m1_1.effort_humanpop, test="Chisq")
 
-#Create updated m1, dropping day
-m1_2.effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + Track.Length + subdistrict + Mode.Transport +
+
+#Create updated m1, dropping mode.transport
+m1_2.effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + Track.Length + subdistrict +
                                 (1 | polygon/survey) +
                                 offset(log(Track.Length)), 
                               family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 #Test what variables should be dropped
 drop1(m1_2.effort_humanpop, test="Chisq")
 
-#Create updated m1, dropping mode.transport
-m1_3.effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + Track.Length + subdistrict +
+#Create updated m1, dropping track length
+m1_3.effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + subdistrict +
                                 (1 | polygon/survey) +
                                 offset(log(Track.Length)), 
                               family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 #Test what variables should be dropped
 drop1(m1_3.effort_humanpop, test="Chisq")
-
-#Create updated m1, dropping track length
-m1_4.effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + subdistrict +
-                                (1 | polygon/survey) +
-                                offset(log(Track.Length)), 
-                              family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
-#Test what variables should be dropped
-drop1(m1_4.effort_humanpop, test="Chisq")
 
 #Final model for effort
 m1_effort_final <- glmer(Sighting.Count ~ effort_humanpop + subdistrict +
@@ -145,7 +138,7 @@ m1_effort_final <- glmer(Sighting.Count ~ effort_humanpop + subdistrict +
 ##Sterilization by Year##
 
 #Most complex m1 using years
-m1_year <- glmer(Sighting.Count ~ three_years_ago_humanpop + two_years_ago_humanpop + last1y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
+m1_year <- glmer(Sighting.Count ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
                               (1 | polygon/survey) +
                               offset(log(Track.Length)), 
                             family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
@@ -154,7 +147,7 @@ m1_year <- glmer(Sighting.Count ~ three_years_ago_humanpop + two_years_ago_human
 vif(m1_year) # problems with the effort variables - all have VIF>5
 
 # Remove variable with the highest VIF
-m1_year <- glmer(Sighting.Count ~ three_years_ago_humanpop + last1y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
+m1_year <- glmer(Sighting.Count ~ effort_3y_humanpop + effort_1y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
                    (1 | polygon/survey) +
                    offset(log(Track.Length)), 
                  family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
@@ -165,24 +158,24 @@ vif(m1_year) # all ok now - can move on to backward selection using drop 1
 #Test what variables should be dropped
 drop1(m1_year, test="Chisq")
 
-#Create updated m1, dropping year 2
-m1_1year <- glmer(Sighting.Count ~ last3y_humanpop + last1y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
+#Create updated m1, dropping year 3
+m1_1year <- glmer(Sighting.Count ~ effort_1y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
                    (1 | polygon/survey) +
                    offset(log(Track.Length)), 
                  family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 #Test what variables should be dropped
 drop1(m1_1year, test="Chisq")
 
-#Create updated m1, dropping year 1
-m1_2year <- glmer(Sighting.Count ~ last3y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
-                    (1 | polygon/survey) +
-                    offset(log(Track.Length)), 
-                  family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+#Create updated m1, dropping day
+m1_2year <- glmer(Sighting.Count ~ effort_1y_humanpop + Track.Length + subdistrict + Mode.Transport +
+                       (1 | polygon/survey) +
+                       offset(log(Track.Length)), 
+                     family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 #Test what variables should be dropped
 drop1(m1_2year, test="Chisq")
 
-#Create updated m1, dropping day
-m1_3year <- glmer(Sighting.Count ~ last3y_humanpop + Track.Length + subdistrict + Mode.Transport +
+#Create updated m1, dropping subdistrict
+m1_3year <- glmer(Sighting.Count ~ effort_1y_humanpop + Track.Length + Mode.Transport +
                     (1 | polygon/survey) +
                     offset(log(Track.Length)), 
                   family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
@@ -190,10 +183,10 @@ m1_3year <- glmer(Sighting.Count ~ last3y_humanpop + Track.Length + subdistrict 
 drop1(m1_3year, test="Chisq")
 
 #Final year model
-m1_year_final <- glmer(Sighting.Count ~ last3y_humanpop + Track.Length + subdistrict + Mode.Transport +
-                    (1 | polygon/survey) +
-                    offset(log(Track.Length)), 
-                  family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+m1_year_final <- glmer(Sighting.Count ~ effort_1y_humanpop + Track.Length + Mode.Transport +
+                         (1 | polygon/survey) +
+                         offset(log(Track.Length)), 
+                       family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 
 
 #Compare the three models
