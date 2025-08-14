@@ -173,16 +173,10 @@ sightings <- sightings %>%
         KK_TC_Clinic$date_admission < date &
         (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
     ),
-    effort_last_3y = sum(
+    effort_1y_ago = sum(
       as.character(KK_TC_Clinic$subdistrict) == subdistrict &
         KK_TC_Clinic$date_admission < date &
-        KK_TC_Clinic$date_admission >= date - years(3) &
-        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
-    ),
-    effort_last_2y = sum(
-      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
-        KK_TC_Clinic$date_admission < date &
-        KK_TC_Clinic$date_admission >= date - years(2) &
+        KK_TC_Clinic$date_admission >= date - years(1) &
         (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
     ),
     effort_3y_ago = sum(
@@ -196,13 +190,8 @@ sightings <- sightings %>%
         KK_TC_Clinic$date_admission < date - years(1) &
         KK_TC_Clinic$date_admission >= date - years(2) &
         (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
-    ),
-    effort_last_1y = sum(
-      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
-        KK_TC_Clinic$date_admission < date &
-        KK_TC_Clinic$date_admission >= date - years(1) &
-        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
     )
+    
   ) %>%
   ungroup()
 
@@ -214,33 +203,21 @@ sightings <- sightings %>%
 
 #Create total sterilization effort last 3 years by human population
 sightings <- sightings %>%
-  mutate(last3y_humanpop = case_when(
-    subdistrict == "KK" ~ effort_last_3y/3000,
-    subdistrict == "TC" ~ effort_last_3y/4938))
-
-#Create total sterilization effort last 2 years by human population
-sightings <- sightings %>%
-  mutate(last2y_humanpop = case_when(
-    subdistrict == "KK" ~ effort_last_2y/3000,
-    subdistrict == "TC" ~ effort_last_2y/4938))
-
-#Create total sterilization effort last 1 year by human population
-sightings <- sightings %>%
-  mutate(last1y_humanpop = case_when(
-    subdistrict == "KK" ~ effort_last_1y/3000,
-    subdistrict == "TC" ~ effort_last_1y/4938))
-
-#Create total sterilization effort 3 years ago by human population
-sightings <- sightings %>%
-  mutate(three_years_ago_humanpop = case_when(
+  mutate(effort_3y_humanpop = case_when(
     subdistrict == "KK" ~ effort_3y_ago/3000,
     subdistrict == "TC" ~ effort_3y_ago/4938))
 
-#Create total sterilization effort 2 years ago by human population
+#Create total sterilization effort last 2 years by human population
 sightings <- sightings %>%
-  mutate(two_years_ago_humanpop = case_when(
+  mutate(effort_2y_humanpop = case_when(
     subdistrict == "KK" ~ effort_2y_ago/3000,
     subdistrict == "TC" ~ effort_2y_ago/4938))
+
+#Create total sterilization effort last 1 year by human population
+sightings <- sightings %>%
+  mutate(effort_1y_humanpop = case_when(
+    subdistrict == "KK" ~ effort_1y_ago/3000,
+    subdistrict == "TC" ~ effort_1y_ago/4938))
 
 
 
