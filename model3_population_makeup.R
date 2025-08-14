@@ -140,14 +140,17 @@ summary_data$Puppy <- NULL
 #Remove males
 summary_data$Adult.male <- NULL
 
+#Create non_lactating column
+
+
 ##MODEL SELECTION (Sightings) - Lactating Females##
 
 #Time since intervention
 
 #Most complex model, lactating females by time since intervention
-m3.1_since <- glmer(Adult.Lactating.female ~ since_intervention + Owned + subdistrict +
+m3.1_since <- glmer(cbind(Adult.Lactating.female,Non.Lactating) ~ since_intervention + Owned + subdistrict +
                       (1 | polygon/survey),
-                    family = poisson, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+                    family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
 vif(m3.1_since)#all fine
 drop1(m3.1_since, test = "Chisq") 
 
@@ -212,10 +215,11 @@ drop1(m3.1_3year, test = "Chisq")
 #Reload fresh version of sightings file
 sightings <- readRDS("sightings.rds", refhook = NULL)
 
+
 #Time since intervention
 
 #Most complex model, puppies by time since intervention
-m3.2_since <- glmer(Puppy ~ since_intervention + owned + subdistrict +
+m3.2_since <- glmer(Puppy ~ since_intervention + owned + Free.roaming.NO.collar + subdistrict +
                       (1 | polygon),
                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 vif(m3.2_since)
