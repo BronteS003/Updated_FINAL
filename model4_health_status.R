@@ -25,199 +25,242 @@ library(emmeans)
 
 #Read rds for sightings file
 
-summary_data <- readRDS("dog_density", refhook = NULL)
+summary_data <- readRDS("dog_density.rds", refhook = NULL)
 
 
-##Model Selection - Health Status (sightings)##
+
+##Model Selection - Health Status (SUMMARY)##
 
 #Time Since Intervention
 
 #Most complex model using time since intervention
-m4_since <- glmer(Healthy ~ since_intervention + Owned + sex + age + Neutered + subdistrict +
+m4_since <- glmer(cbind(Healthy,Sick.or.injured) ~ since_intervention + Owned + Adult.male + Puppy + Neutered + subdistrict +
                     (1 | polygon/survey),
-                    family = poisson, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
-vif(m4_since)
+                    family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+vif(m4_since)#drop neutered
+m4_since <- glmer(cbind(Healthy,Sick.or.injured) ~ since_intervention + Owned + Adult.male + Puppy + subdistrict +
+                    (1 | polygon/survey),
+                  family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
 drop1(m4_since, test = "Chisq") 
 
-#Create updated model dropping subdistrict
-m4_1since <- glmer(Healthy ~ since_intervention + owned + sex + age + Neutered +
-                    (1 | polygon),
-                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+#Create updated model dropping since
+m4_1since<- glmer(cbind(Healthy,Sick.or.injured) ~ Owned + Adult.male + Puppy + subdistrict +
+                    (1 | polygon/survey),
+                  family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
 drop1(m4_1since, test = "Chisq")
 
-#Create updated model dropping since_intervention
-m4_2since <- glmer(Healthy ~ owned + sex + age + Neutered +
-                     (1 | polygon),
-                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+#Create updated model dropping sex
+m4_2since <- glmer(cbind(Healthy,Sick.or.injured) ~ Owned + Puppy + subdistrict +
+                     (1 | polygon/survey),
+                   family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
 drop1(m4_2since, test = "Chisq")
+
+#Create updated model dropping ownership status
+m4_3since <- glmer(cbind(Healthy,Sick.or.injured) ~ Puppy + subdistrict +
+                     (1 | polygon/survey),
+                   family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_3since, test = "Chisq")
+
+#Create updated model dropping puppy
+m4_4since <- glmer(cbind(Healthy,Sick.or.injured) ~ subdistrict +
+                     (1 | polygon/survey),
+                   family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_4since, test = "Chisq")
+
+
 
 #Total Sterilization Effort
 
 #Most complex model using total sterilization effort
-m4_total <- glmer(Healthy ~ effort_humanpop + owned + sex + age + Neutered + subdistrict +
-                    (1 | polygon),
-                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-vif(m4_total)
-drop1(m4_total, test = "Chisq") #None significantly improve the fit of the model
+m4_total <- glmer(cbind(Healthy,Sick.or.injured) ~ effort_humanpop + Owned + Adult.male + Puppy + Neutered + subdistrict +
+                    (1 | polygon/survey),
+                  family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+vif(m4_total)#drop neutered
+m4_total <- glmer(cbind(Healthy,Sick.or.injured) ~ effort_humanpop + Owned + Adult.male + Puppy + subdistrict +
+                    (1 | polygon/survey),
+                  family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_total, test = "Chisq") #None significant
+
+
 
 #Sterilization Effort by Year
 
 #Most complex model using total sterilization effort
-m4_year <- glmer(Healthy ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + owned + sex + age + Neutered + subdistrict +
-                    (1 | polygon),
-                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-vif(m4_year)#drop effort 2y
-m4_year <- glmer(Healthy ~ effort_3y_humanpop + effort_1y_humanpop + owned + sex + age + Neutered + subdistrict +
-                   (1 | polygon),
-                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-vif(m4_year) #all fine now
+m4_year <- glmer(cbind(Healthy,Sick.or.injured) ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + Owned + Adult.male + Puppy + Neutered + subdistrict +
+                   (1 | polygon/survey),
+                 family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+vif(m4_year)#all fine
 drop1(m4_year, test = "Chisq")
 
-#Updated model dropping effort 1y
-m4_1year<- glmer(Healthy ~ effort_3y_humanpop + owned + sex + age + Neutered + subdistrict +
-                   (1 | polygon),
-                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+#Updated model dropping sex
+m4_1year<- glmer(cbind(Healthy,Sick.or.injured) ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + Owned + Puppy + Neutered + subdistrict +
+                   (1 | polygon/survey),
+                 family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
 drop1(m4_1year, test = "Chisq")
 
-#Updated model dropping esubdistrict
-m4_1year<- glmer(Healthy ~ effort_3y_humanpop + owned + sex + age + Neutered +
-                   (1 | polygon),
-                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-drop1(m4_1year, test = "Chisq")
+#Updated model dropping puppy
+m4_2year<- glmer(cbind(Healthy,Sick.or.injured) ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + Owned + Neutered + subdistrict +
+                   (1 | polygon/survey),
+                 family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_2year, test = "Chisq")
 
-#Final model for health status
-m4_final <- glmer(Healthy ~ last3y_humanpop + last2y_humanpop + last1y_humanpop + sex + age + subdistrict +
+#Updated model dropping subdistrict
+m4_3year<- glmer(cbind(Healthy,Sick.or.injured) ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + Owned + Neutered +
+                   (1 | polygon/survey),
+                 family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_3year, test = "Chisq")
+
+#Updated model dropping 1y
+m4_4year<- glmer(cbind(Healthy,Sick.or.injured) ~ effort_3y_humanpop + effort_2y_humanpop + Owned + Neutered +
+                   (1 | polygon/survey),
+                 family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_4year, test = "Chisq")
+
+#Updated model dropping 3y
+m4_4year<- glmer(cbind(Healthy,Sick.or.injured) ~ effort_2y_humanpop + Owned + Neutered +
+                   (1 | polygon/survey),
+                 family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_4year, test = "Chisq")
+
+#Updated model dropping 2y
+m4_4year<- glmer(cbind(Healthy,Sick.or.injured) ~ Owned + Neutered +
+                   (1 | polygon/survey),
+                 family = binomial, data = summary_data, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_4year, test = "Chisq")#None significant
+
+
+
+##Model Selection - Health Status (INDIVIDUAL)##
+
+#Import data
+sightings <- readRDS("sightings.rds", refhook = NULL)
+
+##Since Intervention
+
+#Most complex model
+m4_since <- glmer(Healthy ~ since_intervention + sex + age + Neutered + owned + subdistrict +
+                      (1 | polygon),
+                    family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m4_since)#all good
+drop1(m4_since, test = "Chisq")
+
+#Updated model, dropping subdistrict
+m4_1since <- glmer(Healthy ~ since_intervention + sex + age + Neutered + owned +
                     (1 | polygon),
                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_1since, test = "Chisq")
+
+#Updated model, dropping since
+m4_2since <- glmer(Healthy ~ sex + age + Neutered + owned +
+                     (1 | polygon),
+                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_2since, test = "Chisq")
+
+#Updated model, dropping neutered
+m4_3since <- glmer(Healthy ~ sex + age + owned +
+                     (1 | polygon),
+                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_3since, test = "Chisq")
+
+#Updated model, dropping owned
+m4_3since <- glmer(Healthy ~ sex + age +
+                     (1 | polygon),
+                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_3since, test = "Chisq")
+
+#Updated model, dropping age
+m4_4since <- glmer(Healthy ~ sex +
+                     (1 | polygon),
+                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_4since, test = "Chisq")## Not significant
 
 
 
-##Check for overdispersion##
+##Total Effort
 
-#Check residual deviance relative to degrees of freedom for model4.2
-overdisp.glmer(m4_final)
+#Most complex model
+m4_total <- glmer(Healthy ~ effort_humanpop + sex + age + Neutered + owned + subdistrict +
+                    (1 | polygon),
+                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m4_total)#all good
+drop1(m4_total, test = "Chisq")
 
-#Visually check overdispersion using DHARMa plot
-simulationOutput_model4 <- simulateResiduals(fittedModel = m4_final) #create simulated data
-testDispersion(simulationOutput_model4)
+#Updated model dropping effort
+m4_total <- glmer(Healthy ~ sex + age + Neutered + owned + subdistrict +
+                    (1 | polygon),
+                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_total, test = "Chisq")
 
-#Test for outliers
-testOutliers(simulationOutput_model4)
+#Updated model dropping subdistrict
+m4_total <- glmer(Healthy ~ sex + age + Neutered + owned +
+                    (1 | polygon),
+                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_total, test = "Chisq")
 
-#Check for zero inflation
-testZeroInflation(simulationOutput_model4)
+#Updated model dropping neutered
+m4_total <- glmer(Healthy ~ sex + age + owned +
+                    (1 | polygon),
+                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_total, test = "Chisq")
 
+#Updated model dropping owned
+m4_total <- glmer(Healthy ~ sex + age +
+                    (1 | polygon),
+                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_total, test = "Chisq")
 
-##Graph model
-
-# Get predicted values over 'sex' and 'subdistrict'
-preds4sex <- ggpredict(m4_final, terms = c("sex", "subdistrict")) 
-
-# Plot predicted data
-g1 <- ggplot(preds4sex, aes(x = x,
-                   y = predicted,
-                   fill = group)) +
-  geom_col(position = position_dodge(width = 0.5), width = 0.6) +
-  geom_errorbar(aes(ymin = conf.low,
-                    ymax = conf.high),
-                position = position_dodge(width = 0.5),
-                width = 0.2) +
-  scale_x_discrete(labels = c("Female", "Male")) +
-  labs(
-    title = "Predicted Probability of Being Healthy\nby Sex and Subdistrict",
-    x     = "Sex",
-    y     = "Predicted Probability",
-    fill  = "Subdistrict"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    legend.position = "right",
-    axis.text = element_text(color = "gray30"),
-    panel.grid.minor = element_blank()) +
-  scale_color_viridis_d(option = "C", end = 0.9) +
-  scale_fill_viridis_d(option = "C", end = 0.9)
+#Updated model dropping owned
+m4_total <- glmer(Healthy ~ sex +
+                    (1 | polygon),
+                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_total, test = "Chisq")#Not significant
 
 
+##Years
 
-# Get predicted values over 'age' and 'subdistrict'
-preds4age <- ggpredict(m4_final, terms = c("age", "subdistrict")) 
+#Most complex model
+m4_year <- glmer(Healthy ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + sex + age + Neutered + owned + subdistrict +
+                    (1 | polygon),
+                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+vif(m4_year)#drop 2y
+m4_year <- glmer(Healthy ~ effort_3y_humanpop + effort_1y_humanpop + sex + age + Neutered + owned + subdistrict +
+                   (1 | polygon),
+                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_year, test = "Chisq")
 
-# Plot predicted data 
+#Create updated model dropping y1
+m4_year <- glmer(Healthy ~ effort_3y_humanpop + sex + age + Neutered + owned + subdistrict +
+                   (1 | polygon),
+                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_year, test = "Chisq")
 
-g2 <- ggplot(preds4age, aes(x = x,y = predicted,
-                      fill = group)) +
-  geom_col(position = position_dodge(width = 0.5), width = 0.6) +
-  geom_errorbar(aes(ymin = conf.low,
-                    ymax = conf.high),
-                position = position_dodge(width = 0.5),
-                width = 0.2) +
-  scale_x_discrete(labels = c("Puppy", "Adult")) +
-  labs(
-    title = "Predicted Probability of Being Healthy\nby Age and Subdistrict",
-    x     = "Age",
-    y     = "Predicted Probability",
-    fill  = "Subdistrict"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    legend.position = "right",
-    axis.text = element_text(color = "gray30"),
-    panel.grid.minor = element_blank()) +
-  scale_color_viridis_d(option = "C", end = 0.9) +
-  scale_fill_viridis_d(option = "C", end = 0.9)
+#Create updated model dropping subdistrict
+m4_year <- glmer(Healthy ~ effort_3y_humanpop + sex + age + Neutered + owned +
+                   (1 | polygon),
+                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_year, test = "Chisq")
 
+#Create updated model dropping 3y
+m4_year <- glmer(Healthy ~ sex + age + Neutered + owned +
+                   (1 | polygon),
+                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_year, test = "Chisq")
 
+#Create updated model dropping neutered
+m4_year <- glmer(Healthy ~ sex + age + owned +
+                   (1 | polygon),
+                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_year, test = "Chisq")
 
+#Create updated model dropping owned
+m4_year <- glmer(Healthy ~ sex + age +
+                   (1 | polygon),
+                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_year, test = "Chisq")
 
-# Get predicted values over years and subdistrict
+#Create updated model dropping owned
+m4_year <- glmer(Healthy ~ sex +
+                   (1 | polygon),
+                 family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+drop1(m4_year, test = "Chisq")##None significant
 
-# Reshape intervention by years
-sightings_long <- sightings %>%
-  pivot_longer(
-    cols = c(last3y_humanpop, last2y_humanpop, last1y_humanpop),
-    names_to = "YearBreakdown",
-    values_to = "sterilization_effort"
-  ) %>%
-  mutate(
-    YearBreakdown = case_when(
-      YearBreakdown == "last3y_humanpop" ~ 3,
-      YearBreakdown == "last2y_humanpop" ~ 2,
-      YearBreakdown == "last1y_humanpop" ~ 1
-    )
-  )
-
-#Refit model
-m4_final_long <- glmer(
-  Neutered ~ sterilization_effort * YearBreakdown + subdistrict + (1 | polygon),
-  family = binomial,
-  data = sightings_long,
-  control = glmerControl(optimizer = "bobyqa")
-)
-
-#Predicted values for m4_final_long over "YearBreakdown" and "subdistrict"
-preds4 <- ggpredict(m4_final_long, terms = c("YearBreakdown", "subdistrict"))
-
-# Plot
-g3 <- ggplot(preds4, aes(x = x, y = predicted, color = group, fill = group)) +
-  geom_line(linewidth = 1) +  
-  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, color = NA) +
-  scale_x_reverse(breaks = c(3,2,1)) +
-  labs(
-    title = "Predicted Probability of Being Healthy\nby Year",
-    x = "Years Ago",
-    y = "Probability of Being Healthy",
-    color = "Subdistrict",
-    fill = "Subdistrict"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    legend.position = "right",
-    axis.text = element_text(color = "gray30"),
-    panel.grid.minor = element_blank()) +
-  scale_color_viridis_d(option = "C", end = 0.9) +
-  scale_fill_viridis_d(option = "C", end = 0.9)
-#Combine plots into 1 panel
-g1 + g2 + g3
