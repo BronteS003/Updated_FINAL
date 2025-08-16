@@ -241,7 +241,7 @@ plot(simulationOutput_m1_since) #does this show a problem with DHARMa residuals
 preds1 <- ggpredict(m1_final_effort, terms = c("effort_humanpop", "subdistrict"),
                     condition = c(Track.Length=1))
 
-p1 <-ggplot(preds1, aes(x = x, y = predicted, colour = group)) +
+p1 <- ggplot(preds1, aes(x = x, y = predicted, colour = group)) +
   stat_smooth(method = "lm") +
   labs(title = "Predicted Sightings/km by\n All Time Sterilization Effort\n and Subdistrict",
        x = "All Time Effort (per Capita)",
@@ -254,7 +254,8 @@ p1 <-ggplot(preds1, aes(x = x, y = predicted, colour = group)) +
     axis.text = element_text(color = "gray30"),
     panel.grid.minor = element_blank()) +
   scale_color_viridis_d(option = "C", end = 0.9) +
-  scale_fill_viridis_d(option = "C", end = 0.9)
+  scale_fill_viridis_d(option = "C", end = 0.9) +
+  scale_y_continuous(breaks = c(1,3,5,7,9,11,13), limits = c(0, 14))
 
 
 # Get predicted values over time since intervention
@@ -274,9 +275,12 @@ p2 <- ggplot(preds1.1, aes(x = x, y = predicted, colour = group)) +
     axis.text = element_text(color = "gray30"),
     panel.grid.minor = element_blank()) +
   scale_color_viridis_d(option = "C", end = 0.9) +
-  scale_fill_viridis_d(option = "C", end = 0.9)
+  scale_fill_viridis_d(option = "C", end = 0.9)+ 
+  scale_y_continuous(breaks = c(1,3,5,7,9,11,13), limits = c(0, 14))
 
 #Combine into one panel with a shared legend
-p1 + p2 + plot_layout(guides = "collect")
+p1 + p2 +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = 'A')
 
 

@@ -152,11 +152,12 @@ g1 <- ggplot(preds_owned, aes(x = x,
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
+    plot.title = element_text(size = 12,face = "bold", hjust = 0.5),
     legend.position = "none",
     axis.text = element_text(color = "gray30"),
     panel.grid.minor = element_blank()
-  )
+  )+
+  scale_y_continuous(breaks = c(0,0.2, 0.4, 0.6, 0.8), limits = c(0, 1))
 
 
 
@@ -178,11 +179,12 @@ g2 <- ggplot(preds_sex, aes(x = x,
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
+    plot.title = element_text(size = 12,face = "bold", hjust = 0.5),
     legend.position = "none",
     axis.text = element_text(color = "gray30"),
     panel.grid.minor = element_blank()
-  )
+  )+
+  scale_y_continuous(breaks = c(0,0.2, 0.4, 0.6, 0.8), limits = c(0, 1))
 
 #create final graph by total sterilization effort
 # Get predicted values over "effort_humanpop"
@@ -196,16 +198,60 @@ g3 <- ggplot(preds_effort, aes(x = x, y = predicted)) +
        y = "Probability of Being Neutered") +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
+    plot.title = element_text(size = 12,face = "bold", hjust = 0.5),
     legend.position = "right",
     axis.text = element_text(color = "gray30"),
     panel.grid.minor = element_blank()) +
   scale_color_viridis_d(option = "C", end = 0.9) +
-  scale_fill_viridis_d(option = "C", end = 0.9)
+  scale_fill_viridis_d(option = "C", end = 0.9) +
+  scale_y_continuous(breaks = c(0,0.2, 0.4, 0.6, 0.8), limits = c(0, 1))
 
 
 #Combine into one panel 
-g1 + g2 + g3
+g1 + g2 + g3 +
+  plot_annotation(tag_levels = 'A')
+
+
+
+#Plot total effort by year
+
+#Restructure data
+newdat <- sightings %>%
+  dplyr::select(effort_humanpop, owned, sex, polygon, year) %>%
+  dplyr::group_by(year) %>%
+  dplyr::summarise(
+    effort_humanpop = mean(effort_humanpop, na.rm = TRUE),
+    owned = first(owned),     
+    sex = first(sex),         
+    polygon = first(polygon)  
+  )
+
+#Create predicted values
+newdat$pred <- predict(
+  m2_total_final, 
+  newdata = newdat, 
+  type = "response", 
+  re.form = NA)
+
+#Make sure year is numeric
+newdat$year <- as.numeric(newdat$year)
+
+#Plot 
+ggplot(newdat, aes(x = year, y = pred, group = 1)) +
+  geom_line(color = "steelblue", size = 1.2) +   # set line color + thickness
+  geom_point(color = "steelblue", size = 3) +    # set point color + size
+  labs(title = "Probability of Being Neutered by Year",
+       y = "Predicted probability of being neutered",
+       x = "Year") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()
+  ) +
+  scale_y_continuous(breaks = c(0,0.2,0.4,0.6,0.8), limits = c(0,1))
+
 
 #Identify exact data points from the plot
 plot_data <- ggplot_build(g3)$data
