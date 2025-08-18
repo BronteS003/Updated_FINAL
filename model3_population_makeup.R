@@ -434,3 +434,14 @@ ggplot(preds3.2, aes(x = x, y = predicted)) +
     panel.grid.minor = element_blank()) +
   scale_color_viridis_d(option = "C", end = 0.9) +
   scale_fill_viridis_d(option = "C", end = 0.9)
+
+plot(preds3.2) + 
+  labs(title = "Probability of Observing a Puppy by\n Years Since Intervention",
+       x = "Time Since Intervention (Year)",
+       y = "Probability of Observing a Puppy") +
+  theme_minimal(base_size = 14)  +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) 
