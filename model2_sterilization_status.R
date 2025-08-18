@@ -162,7 +162,7 @@ g1 <- ggplot(preds_owned, aes(x = x,
 
 
 # Get predicted values over "sex"
-preds_sex <- ggpredict(m2_year_final, terms = c("sex"))
+preds_sex <- ggpredict(m2_total_final, terms = c("sex"))
 
 # Plot Probability of Being Neutered by sex
 g2 <- ggplot(preds_sex, aes(x = x,
