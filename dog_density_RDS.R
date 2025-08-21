@@ -4,7 +4,7 @@
 ## Final version of cleaned and organized dog density, clinic_data, and       ##
 ## KK_TC_Clinic files, to be used in all models going forward                 ##
 ################################################################################
-## Created July 23, 2025 by Bronte Slote, lasted edited July 23, 2025         ##
+## Created July 23, 2025 by Bronte Slote, lasted edited Aug. 21, 2025         ##
 ################################################################################
 
 

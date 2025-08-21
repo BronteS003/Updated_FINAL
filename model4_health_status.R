@@ -3,7 +3,7 @@
 ################################################################################
 # Data from sight and resight surveys as recorded in WVS                       #
 ################################################################################
-# Created June 14, 2025 by Bronte Slote, last modified July 15, 2025           #
+# Created June 14, 2025 by Bronte Slote, last modified Aug. 21, 2025           #
 ################################################################################
 
 ##Load Libraries
@@ -17,9 +17,9 @@ library(RVAideMemoire) #checking for overdispersion
 library(DHARMa) #checking overdispersion visually
 library(ggeffects) #creating predicted values and visualizing them
 library(lmtest) #conducting likelihood ratio tests
-library(tidyr)
-library(patchwork)
-library(emmeans)
+library(tidyr) #cleaning data
+library(patchwork) #combining plots into one panel
+library(emmeans) #model comparisons
 
 ##IMPORT DATA##
 

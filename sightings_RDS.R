@@ -4,7 +4,7 @@
 ## Final version of cleaned and organized sightings file, to be used in all   ##
 ## models going forward                                                       ##
 ################################################################################
-## Created July 26, 2025 by Bronte Slote, lasted edited July 26, 2025         ##
+## Created July 26, 2025 by Bronte Slote, lasted edited Aug. 21, 2025         ##
 ################################################################################
 
 ##Load Libraries
@@ -130,7 +130,7 @@ sightings <- na.omit(sightings)
 
 #Import data set "clinic data"
 clinic_data <- read_csv("clinic_data .csv")
-# View(clinic_data)
+
 
 #Define "subdistrict" as factor
 clinic_data <- clinic_data %>%

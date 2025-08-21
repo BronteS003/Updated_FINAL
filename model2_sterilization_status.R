@@ -3,7 +3,7 @@
 ################################################################################
 # Data from sight and resight surveys as recorded in WVS                       #
 ################################################################################
-# Created June 7, 2025 by Bronte Slote, last modified July 17, 2025             #
+# Created June 7, 2025 by Bronte Slote, last modified Aug. 21, 2025             #
 ################################################################################
 
 ##Load Libraries
@@ -152,24 +152,28 @@ g1 <- ggplot(preds_owned, aes(x = x,
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(size = 12,face = "bold", hjust = 0.5),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
     legend.position = "none",
     axis.text = element_text(color = "gray30"),
     panel.grid.minor = element_blank()
-  )+
-  scale_y_continuous(breaks = c(0,0.2, 0.4, 0.6, 0.8), limits = c(0, 1))
-
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),   
+    breaks = seq(0, 1, 0.2),                      
+    limits = c(0, 0.9)
+  )
 
 
 # Get predicted values over "sex"
 preds_sex <- ggpredict(m2_total_final, terms = c("sex"))
 
 # Plot Probability of Being Neutered by sex
-g2 <- ggplot(preds_sex, aes(x = x,
-                        y = predicted)) +
+
+library(scales)
+
+g2 <- ggplot(preds_sex, aes(x = x, y = predicted)) +
   geom_col(width = 0.6, fill = "steelblue") +
-  geom_errorbar(aes(ymin = conf.low,
-                    ymax = conf.high),
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
                 width = 0.2) +
   scale_x_discrete(labels = c("F", "M")) +
   labs(
@@ -179,20 +183,25 @@ g2 <- ggplot(preds_sex, aes(x = x,
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(size = 12,face = "bold", hjust = 0.5),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
     legend.position = "none",
     axis.text = element_text(color = "gray30"),
     panel.grid.minor = element_blank()
-  )+
-  scale_y_continuous(breaks = c(0,0.2, 0.4, 0.6, 0.8), limits = c(0, 1))
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),   
+    breaks = seq(0, 1, 0.2),                      
+    limits = c(0, 0.9)
+  )
 
 #create final graph by total sterilization effort
 # Get predicted values over "effort_humanpop"
 preds_effort <- ggpredict(m2_total_final, terms = c("effort_humanpop"))
 
-# Plot Probability of Being Neutered by Sterilizations ownership status 
-g3 <- ggplot(preds_effort, aes(x = x, y = predicted)) +
-  stat_smooth(method = "lm") +
+# Plot Probability of Being Neutered by Sterilization effort 
+ggplot(preds_effort, aes(x = x, y = predicted)) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), fill = "grey70", alpha = 0.5) +
+  geom_line(size = 1.2, color = "steelblue") +
   labs(title = "Probability of Being Neutered by\n Total Sterilization Effort",
        x = "Total Sterilization Effort (Per Capita)",
        y = "Probability of Being Neutered") +
@@ -207,54 +216,53 @@ g3 <- ggplot(preds_effort, aes(x = x, y = predicted)) +
   scale_y_continuous(breaks = c(0,0.2, 0.4, 0.6, 0.8), limits = c(0, 1))
 
 
+g3 <- plot(preds_effort) + 
+  labs(title = "Predicted Probability of Being Neutered \n by Sterilization Effort",
+       x = "Total Sterilization Effort (Per Capita)",
+       y = "Predicted Probability") +
+  theme_minimal(base_size = 14)  +
+  theme(
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank())
+
 #Combine into one panel 
 g1 + g2 + g3 +
   plot_annotation(tag_levels = 'A')
 
 
 
-#Plot total effort by year
+#Plot total effort by time 
 
-#Restructure data
-newdat <- sightings %>%
-  dplyr::select(effort_humanpop, owned, sex, polygon, year) %>%
-  dplyr::group_by(year) %>%
-  dplyr::summarise(
-    effort_humanpop = mean(effort_humanpop, na.rm = TRUE),
-    owned = first(owned),     
-    sex = first(sex),         
-    polygon = first(polygon)  
-  )
+#Create predicted values 
+preds_year <- ggpredict(m2_since_final, terms = c("since_intervention"))
 
-#Create predicted values
-newdat$pred <- predict(
-  m2_total_final, 
-  newdata = newdat, 
-  type = "response", 
-  re.form = NA)
-
-#Make sure year is numeric
-newdat$year <- as.numeric(newdat$year)
-
-#Plot 
-ggplot(newdat, aes(x = year, y = pred, group = 1)) +
-  geom_line(color = "steelblue", size = 1.2) +   # set line color + thickness
-  geom_point(color = "steelblue", size = 3) +    # set point color + size
+ggplot(preds_year, aes(x = x, y = predicted)) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), fill = "grey70", alpha = 0.5) +
+  geom_line(size = 1.2, color = "steelblue") +
   labs(title = "Probability of Being Neutered by Year",
-       y = "Predicted probability of being neutered",
-       x = "Year") +
+       x = "Time Since Intervention (Year)",
+       y = "Probability of Being Neutered") +
   theme_minimal(base_size = 14) +
   theme(
     plot.title = element_text(face = "bold", hjust = 0.5),
     legend.position = "right",
     axis.text = element_text(color = "gray30"),
-    panel.grid.minor = element_blank()
-  ) +
-  scale_y_continuous(breaks = c(0,0.2,0.4,0.6,0.8), limits = c(0,1))
+    panel.grid.minor = element_blank()) +
+  scale_color_viridis_d(option = "C", end = 0.9) +
+  scale_fill_viridis_d(option = "C", end = 0.9)+ 
+  scale_y_continuous(breaks = c(0,0.2, 0.4, 0.6, 0.8), limits = c(0, 1))
 
+#Plots with plot function
 
-#Identify exact data points from the plot
-plot_data <- ggplot_build(g3)$data
-plot_data
-
-
+plot(preds_year) + 
+  labs(title = "Predicted Probability of Being Neutered",
+       x = "Time Since Intervention (Years)",
+       y = "Predicted Probability") +
+  theme_minimal(base_size = 14)  +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank())

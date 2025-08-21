@@ -3,7 +3,7 @@
 ################################################################################
 # Data from sight and resight surveys as recorded in WVS                       #
 ################################################################################
-# Created June 14, 2025 by Bronte Slote, last modified July 15, 2025           #
+# Created June 14, 2025 by Bronte Slote, last modified Aug. 21, 2025           #
 ################################################################################
 
 ##Load Libraries
@@ -19,6 +19,7 @@ library(ggeffects) #creating predicted values and visualizing them
 library(lmtest) #conducting likelihood ratio tests
 library(tidyr)
 library(car)
+library(scales)
 
 ##IMPORT DATA##
 
@@ -422,10 +423,11 @@ preds3.2 <- ggpredict(m3.2_final_since, terms = c("since_intervention"))
 
 # Plot
 ggplot(preds3.2, aes(x = x, y = predicted)) +
-  stat_smooth(method = "lm") +
-  labs(title = "Probability of Observing a Puppy by\n Years Since Intervention",
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), fill = "grey70", alpha = 0.5) +
+  geom_line(size = 1.2, color = "steelblue") +
+  labs(title = "Probability of Being a Puppy by\n Years Since Intervention",
        x = "Time Since Intervention (Year)",
-       y = "Probability of Observing a Puppy") +
+       y = "Probability of Being a Puppy") +
   theme_minimal(base_size = 14) +
   theme(
     plot.title = element_text(face = "bold", hjust = 0.5),
@@ -433,12 +435,13 @@ ggplot(preds3.2, aes(x = x, y = predicted)) +
     axis.text = element_text(color = "gray30"),
     panel.grid.minor = element_blank()) +
   scale_color_viridis_d(option = "C", end = 0.9) +
-  scale_fill_viridis_d(option = "C", end = 0.9)
+  scale_fill_viridis_d(option = "C", end = 0.9) +
+  scale_y_continuous(breaks = c(0,0.02, 0.04, 0.06, 0.08), limits = c(0, 0.1))
 
 plot(preds3.2) + 
-  labs(title = "Probability of Observing a Puppy by\n Years Since Intervention",
+  labs(title = "Probability of Being a Puppy by\n Years Since Intervention",
        x = "Time Since Intervention (Year)",
-       y = "Probability of Observing a Puppy") +
+       y = "Probability of Being a Puppy") +
   theme_minimal(base_size = 14)  +
   theme(
     plot.title = element_text(face = "bold", hjust = 0.5),

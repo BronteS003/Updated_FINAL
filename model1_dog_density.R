@@ -4,7 +4,7 @@
 # Data from sight and resight surveys as recorded in WVS, with track lengths   #
 # from Talea to calculate dogs per km of track surveyed                        #
 ################################################################################
-# Created June 3, 2025 by Bronte Slote, last modified JuLY 17, 2025             #
+# Created June 3, 2025 by Bronte Slote, last modified Aug. 21, 2025             #
 ################################################################################
 
 ##Load Libraries
@@ -29,6 +29,8 @@ library(patchwork) #combine graphs into 1 panel
 
 dog_density <- readRDS("dog_density.rds", refhook = NULL)
 
+
+
 ##VISUALIZING DATA##
 
 #Create jitter plot with line of best fit showing dogs per km by date and subdistrict
@@ -44,6 +46,8 @@ ggplot(dog_density,aes(x=since_intervention,y=Sighting.Count,colour=polygon))+
   geom_smooth(method = "lm", se = TRUE) +
   labs(title = "Jitter Plot with Line of Best Fit") +
   theme_minimal()
+
+
 
 ##MODEL SELECTION##
 
@@ -242,7 +246,7 @@ preds1 <- ggpredict(m1_final_effort, terms = c("effort_humanpop", "subdistrict")
                     condition = c(Track.Length=1))
 
 p1 <- ggplot(preds1, aes(x = x, y = predicted, colour = group)) +
-  stat_smooth(method = "lm") +
+  geom_line(size = 1.2) +
   labs(title = "Predicted Sightings/km by\n All Time Sterilization Effort\n and Subdistrict",
        x = "All Time Effort (per Capita)",
        y = "Predicted Sightings per km",
@@ -263,7 +267,7 @@ preds1.1 <- ggpredict(m1_final_since, terms = c("since_intervention", "subdistri
                     condition = c(Track.Length=1))
 
 p2 <- ggplot(preds1.1, aes(x = x, y = predicted, colour = group)) +
-  stat_smooth(method = "lm") +
+  geom_line(size = 1.2) +
   labs(title = "Predicted Sightings/km by\n Years Since Intervention\n and Subdistrict",
        x = "Time Since Intervention (Year)",
        y = "Predicted Sightings per km",
@@ -283,4 +287,34 @@ p1 + p2 +
   plot_layout(guides = "collect") +
   plot_annotation(tag_levels = 'A')
 
+
+#Plots with plot function instead
+p1 <- plot(preds1) + 
+  labs(title = "Predicted Sightings/km by\n All Time Sterilization Effort\n and Subdistrict",
+       x = "All Time Effort (Per Capita)",
+       y = "Predicted Sightings per Km") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  coord_cartesian(ylim = c(0, 22))   
+
+p2 <- plot(preds1.1) + 
+  labs(title = "Predicted Sightings/km by\n Time Since Intervention\n and Subdistrict",
+       x = "Time Since Intervention (Years)",
+       y = "Predicted Sightings per Km") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  coord_cartesian(ylim = c(0, 22)) 
+
+#Combine into one panel with a shared legend
+p1 + p2 +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = 'A')
 
