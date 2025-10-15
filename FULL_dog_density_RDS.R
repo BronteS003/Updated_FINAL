@@ -94,6 +94,10 @@ dog_density$Mode.Transport <- str_extract(
   "walking|4-wheeler|2-wheeler|bicycle"
 )
 
+#Make any NAs be shown as unknown
+dog_density <- dog_density %>%
+  mutate(Mode.Transport = if_else(is.na(Mode.Transport), "Unknown", Mode.Transport))
+
 #Make "Mode.Transport" categorical
 dog_density <- dog_density %>%
   mutate(Mode.Transport= as.factor(Mode.Transport))
@@ -104,3 +108,115 @@ dog_density <- dog_density %>%
 
 
 ##DEFINE STERILIZATION EFFORT##
+
+#Import data set "clinic data"
+clinic_data <- read.csv("FULL_clinic_data.csv")
+
+#Define "subdistrict" as factor
+clinic_data <- clinic_data %>%
+  mutate(Subdistrict = as.factor(Subdistrict))
+
+#Create new data set with only regions of "Khok Kurat" and "Tha Chang"
+KK_TC_Clinic <- clinic_data %>%
+  filter(Subdistrict %in% c("Khok Kurat", "Tha Chang"))
+
+##Define variables in clinic_data data set
+
+#Define "Year" as factor
+KK_TC_Clinic <- KK_TC_Clinic %>%
+  mutate(Year = as.factor(Year))
+
+#Define "age" as factor
+KK_TC_Clinic <- KK_TC_Clinic %>%
+  mutate(age = as.factor(age))
+
+#Recognize date as a date
+KK_TC_Clinic$date_admission <- as.Date(KK_TC_Clinic$date_admission)
+
+#Rename subdistrict column and convert to either KK or TC
+KK_TC_Clinic <- KK_TC_Clinic %>%
+  rename("subdistrict" = "Subdistrict")
+
+KK_TC_Clinic <- KK_TC_Clinic %>%
+  mutate(subdistrict = dplyr::recode(
+    subdistrict,
+    "Khok Kurat" = "KK",
+    "Tha Chang" = "TC"
+  ))
+
+#Define sterilization effort
+dog_density <- dog_density %>%
+  rowwise() %>%
+  mutate(
+    effort_all_time = sum(
+      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
+        KK_TC_Clinic$date_admission < date &
+        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
+    ),
+    effort_1y_ago = sum(
+      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
+        KK_TC_Clinic$date_admission < date &
+        KK_TC_Clinic$date_admission >= date - years(1) &
+        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
+    ),
+    effort_3y_ago = sum(
+      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
+        KK_TC_Clinic$date_admission < date - years(2) &
+        KK_TC_Clinic$date_admission >= date - years(3) &
+        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
+    ),
+    effort_2y_ago = sum(
+      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
+        KK_TC_Clinic$date_admission < date - years(1) &
+        KK_TC_Clinic$date_admission >= date - years(2) &
+        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
+    ),
+    effort_4y_ago = sum(
+      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
+        KK_TC_Clinic$date_admission < date - years(3) &
+        KK_TC_Clinic$date_admission >= date - years(4) &
+        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
+    )
+    
+  ) %>%
+  ungroup()
+
+#Create total sterilization effort by human population
+dog_density <- dog_density %>%
+  mutate(effort_humanpop = case_when(
+    subdistrict == "KK" ~ effort_all_time/3000,
+    subdistrict == "TC" ~ effort_all_time/4938))
+
+#Create total sterilization effort 1 year ago by human population
+dog_density <- dog_density %>%
+  mutate(effort_4y_humanpop = case_when(
+    subdistrict == "KK" ~ effort_4y_ago/3000,
+    subdistrict == "TC" ~ effort_4y_ago/4938))
+
+#Create total sterilization effort 3 years ago by human population
+dog_density <- dog_density %>%
+  mutate(effort_3y_humanpop = case_when(
+    subdistrict == "KK" ~ effort_3y_ago/3000,
+    subdistrict == "TC" ~ effort_3y_ago/4938))
+
+#Create total sterilization effort 2 years ago by human population
+dog_density <- dog_density %>%
+  mutate(effort_2y_humanpop = case_when(
+    subdistrict == "KK" ~ effort_2y_ago/3000,
+    subdistrict == "TC" ~ effort_2y_ago/4938))
+
+#Create total sterilization effort 1 year ago by human population
+dog_density <- dog_density %>%
+  mutate(effort_1y_humanpop = case_when(
+    subdistrict == "KK" ~ effort_1y_ago/3000,
+    subdistrict == "TC" ~ effort_1y_ago/4938))
+
+##Save as objects
+
+#dog_density
+saveRDS(dog_density, file = "FULL_dog_density.rds", ascii = FALSE, version = NULL,
+        compress = TRUE, refhook = NULL)
+
+#refined clinic data with only KK_TC_Clinic
+saveRDS(KK_TC_Clinic, file = "FULL_clinic_data.rds", ascii = FALSE, version = NULL,
+        compress = TRUE, refhook = NULL)
