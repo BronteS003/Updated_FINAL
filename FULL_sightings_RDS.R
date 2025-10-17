@@ -90,7 +90,7 @@ sightings <- sightings %>%
     polygon == "TC 12" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-18")) ~ 1,
     polygon == "TC 16" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-10")) ~ 1,
     polygon == "TC 20" & date %in% as.Date(c("2023-03-17", "2024-09-09", "2025-09-18")) ~ 1,
-    polygon == "Tc 24" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-18")) ~ 1,
+    polygon == "TC 24" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-18")) ~ 1,
     TRUE ~ 2  # everything else gets "2"
   ))
 
