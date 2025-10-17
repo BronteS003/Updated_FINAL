@@ -60,7 +60,7 @@ m2_1since <- glmer(Neutered ~ since_intervention + owned + sex +
 drop1(m2_1since, test = "Chisq")#all variable significant
 
 #Final model for time since intervention
-m2_since_final<- glmer(Neutered ~ since_intervention + owned + sex +
+m2_final_since <- glmer(Neutered ~ since_intervention + owned + sex +
                          (1 | polygon),
                        family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 
@@ -91,7 +91,7 @@ m2_2total <- glmer(Neutered ~ effort_humanpop + sex +
 drop1(m2_2total, test = "Chisq")# all significant
 
 #Final model for total effort
-m2_total_final <- glmer(Neutered ~ effort_humanpop + sex +
+m2_final_total <- glmer(Neutered ~ effort_humanpop + sex +
                           (1 | polygon),
                         family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 
@@ -125,13 +125,13 @@ m2_3year <- glmer(Neutered ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y
 drop1(m2_3year, test = "Chisq")
 
 #Final model for effort by year
-m2_year_final <-  glmer(Neutered ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + sex +
+m2_final_year <-  glmer(Neutered ~ effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + sex +
                          (1 | polygon),
                        family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 
 
 #Compare three sterilization effort indicators
-AIC(m2_since_final, m2_total_final, m2_year_final) #year has the lowest AIC
+AIC(m2_final_since, m2_final_total, m2_final_year) #year has the lowest AIC
 
 
 ##CHECK FOR OVERDISPERSION##
@@ -152,7 +152,7 @@ testUniformity(simulationOutput_model2)
 ##PLOT MODELS##
 
 # Get predicted values over "sex"
-preds_sex <- ggpredict(m2_year_final, terms = c("sex"))
+preds_sex <- ggpredict(m2_final_year, terms = c("sex"))
 
 # Plot Probability of Being Neutered by sex
 
@@ -182,22 +182,97 @@ ggplot(preds_sex, aes(x = x, y = predicted)) +
   )
 
 
-#create final graph by years
-# Get predicted values over "years"
-preds_year <- ggpredict(m2_year_final, terms = c("effort_3y_humanpop"))
+#create plot for probability of being sterilized by effort
 
-# Plot Probability of Being Neutered by years
-plot(preds_year) + 
-  labs(title = "Predicted Sightings/km by\n Sterilization Effort by Year",
-       x = "Effort By Year",
-       y = "Predicted Sightings per Km") +
+#Get predicted values over effort
+preds_effort <- ggpredict(m2_final_total, terms = "effort_humanpop")
+
+#Plot
+plot(preds_effort) +
+  labs(
+    title = "Predicted Probability of Being Neutered \n by Sterilization Effort",
+    x = "All Time Effort (Per Capita)",
+    y = "Probability of Being Neutered"
+  ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    legend.position = "right",
-    axis.text = element_text(color = "gray30"),
-    panel.grid.minor = element_blank()) +
-  coord_cartesian(ylim = c(0, 22)) 
+    plot.title = element_text(face = "bold", hjust = 0.5)  # ← bold + centered
+  )
+
+
+#Create plot for probability of being sterilized by time since intervention
+
+# Get predicted values over time since
+preds_since <- ggpredict(m2_final_since, terms = c("since_intervention"))
+
+# Plot Probability of Being Neutered by years since intervention
+plot(preds_since) + 
+  labs(
+    title = "Predicted Probability of Being Neutered \n by Time Since Intervention",
+    x = "Time Since Intervention",
+    y = "Probability of Being Neutered"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5)  # ← bold + centered
+  )
 
 
 
+
+##Plot Probability of Being Neutered by effort by year
+
+#Create predicted values for 3 years ago
+preds_3y <- ggpredict(m2_final_year, terms = "effort_3y_humanpop", type = "fixed")
+
+plot(preds_3y) +
+  labs(
+    title = "Predicted Probability of Being Neutered\nvs Sterilization Effort 3 Years Ago",
+    x = "Sterilizations per Human Capita (3 Years Ago)",
+    y = "Probability of Being Neutered"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
+
+#Create predicted values for 2 years ago
+preds_2y <- ggpredict(m2_final_year, terms = "effort_2y_humanpop", type = "fixed")
+
+plot(preds_2y) +
+  labs(
+    title = "Predicted Probability of Being Neutered\nvs Sterilization Effort 2 Years Ago",
+    x = "Sterilizations per Human Capita (2 Years Ago)",
+    y = "Probability of Being Neutered"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
+
+#Create predicted values for 1 years ago
+preds_1y <- ggpredict(m2_final_year, terms = "effort_1y_humanpop", type = "fixed")
+
+plot(preds_1y) +
+  labs(
+    title = "Predicted Probability of Being Neutered\nvs Sterilization Effort 1 Year Ago",
+    x = "Sterilizations per Human Capita (1 Year Ago)",
+    y = "Probability of Being Neutered"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
+
+#Put it all in the same plot
+preds_3y$Outcome <- "3 Years Ago"
+preds_2y$Outcome <- "2 Years Ago"
+preds_1y$Outcome <- "1 Year Ago"
+preds_all <- rbind(preds_3y, preds_2y,preds_1y)
+
+ggplot(preds_all, aes(x = x, y = predicted, color = Outcome, fill = Outcome)) +
+  geom_line(linewidth = 1.2) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.15, color = NA) +
+  labs(
+    title = "Probability of Being Neutered by Past Sterilization Effort",
+    x = "Sterilizations per Human Capita",
+    y = "Probability of being Neutered"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+  scale_color_manual(values = c("3 Years Ago" = "#2E86AB", "2 Years Ago" = "#E07A5F", "1 Year Ago" = "darkgreen")) +
+  scale_fill_manual(values = c("3 Years Ago" = "#2E86AB", "2 Years Ago" = "#E07A5F", "1 Year Ago" = "darkgreen"))
