@@ -62,3 +62,4 @@ ggplot(clinic_data, aes(x = year, y = surgery_counts, fill = subdistrict)) +
   facet_wrap(~subdistrict)
 
 
+
