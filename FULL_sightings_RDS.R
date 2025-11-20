@@ -4,7 +4,7 @@
 ## Cleaned and organized sightings data set with the most up to date data as  ##
 ## of October, 2025. For use in all future code using full data.              ##
 ################################################################################
-## Created Oct. 15, 2025, by Bronte Slote, last updated Oct. 15               ##
+## Created Oct. 15, 2025, by Bronte Slote, last updated Nov. 19               ##
 ################################################################################
 
 ##LOAD LIBRARIES##
@@ -48,6 +48,31 @@ sightings$subdistrict <- str_extract(sightings$polygon, "^[A-Za-z]+") #extract t
 sightings <- sightings %>%
   mutate(subdistrict = factor(subdistrict, levels = c("KK","TC"))) #make "subdistrict" a factor with the levels 'KK' and 'TC'
 
+#Create survey identifier based on polygon and year of survey
+sightings <- sightings %>%
+  mutate(
+    year = format(as.Date(date), "%Y"),  # create a new column isolating year
+    survey = paste(polygon, year, sep = "_")  # create new column combining polygon and year to create a unique identifier for surveys
+  )
+
+#Make survey a factor variable  
+sightings <- sightings %>%
+  mutate(survey = as.factor(survey))
+
+#Make column for resight
+sightings <- sightings %>%
+  mutate(
+    notes_clean = str_to_lower(Notes),
+    resight = case_when(
+      notes_clean == "resight"   ~ "Yes",
+      notes_clean == "new_dog"   ~ "No",
+      notes_clean %in% c("", NA, "blank") ~ "No",  
+      notes_clean == "unknown"   ~ "unknown",               
+      TRUE                       ~ NA                
+    )
+  ) %>%
+  select(-notes_clean)
+
 #Convert date to a date variable
 sightings <- sightings %>%
   mutate(date = substr(date, 1, 10))#just take date
@@ -55,6 +80,19 @@ sightings <- sightings %>%
 #Recognize date as date
 sightings <- sightings %>%
   mutate(date = as.Date(date))
+
+#Find duplicate dates
+dup_rows <- sightings %>%
+  group_by(survey, date) %>%
+  summarise(n = n(), .groups = "drop")
+
+#Correct dates for TC 12_2024 
+sightings <- sightings %>%
+  mutate(date = if_else(
+    survey == "TC 12_2024" & Notes %in% c("new_dog", "resight"),
+    date + days(2),
+    date
+  ))
 
 #Create "since_intervention" column
 sightings <- sightings %>%
@@ -70,16 +108,6 @@ sightings <- sightings %>%
 sightings <- sightings %>%
   mutate(since_intervention = since_intervention / 365)
 
-#Create survey identifier based on polygon and year of survey
-sightings <- sightings %>%
-  mutate(
-    year = format(as.Date(date), "%Y"),  # create a new column isolating year
-    survey = paste(polygon, year, sep = "_")  # create new column combining polygon and year to create a unique identifier for surveys
-  )
-
-#Make survey a factor variable  
-sightings <- sightings %>%
-  mutate(survey = as.factor(survey))
 
 #Create variable "day" to show either day 1 or 2 survey
 sightings <- sightings %>%
@@ -89,7 +117,7 @@ sightings <- sightings %>%
     polygon == "KK 07" & date %in% as.Date(c("2021-10-07", "2023-02-28", "2024-08-27", "2025-09-04")) ~ 1,
     polygon == "TC 12" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-18")) ~ 1,
     polygon == "TC 16" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-10")) ~ 1,
-    polygon == "TC 20" & date %in% as.Date(c("2023-03-17", "2024-09-09", "2025-09-18")) ~ 1,
+    polygon == "TC 20" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-18")) ~ 1,
     polygon == "TC 24" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-18")) ~ 1,
     TRUE ~ 2  # everything else gets "2"
   ))
