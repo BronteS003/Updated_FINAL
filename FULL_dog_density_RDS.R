@@ -5,7 +5,7 @@
 ## with FULL updated dataset including most recent surveys/sterilizations    ##
 ## as of October 2025. To be used in all FULL models.                        ##
 ###############################################################################
-## Created Oct. 15, 2025 by Bronte Slote, last updated Oct. 15               ##
+## Created Oct. 15, 2025 by Bronte Slote, last updated Nov. 19, 2025         ##
 ###############################################################################
 
 ##LOAD LIBRARIES##
@@ -47,6 +47,12 @@ dog_density$date <- parse_date_time(dog_density$date, orders = "d B y, H:M")
 
 #Convert date to date formatting
 dog_density$date <- as.Date(dog_density$date)
+
+#Check for duplicates
+dup_rows <- dog_density[dog_density$date %in% dog_density$date[duplicated(dog_density$date)], ]
+
+#Time zone error in row 25 causing to appear as duplicate day survey, add 1 day to time
+dog_density$date[25] <- dog_density$date[25] + days(2)
 
 #Create date since intervention column
 dog_density <- dog_density %>%

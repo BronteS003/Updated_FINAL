@@ -104,7 +104,7 @@ dog_density <- dog_density %>%
 
 #Import data set "clinic data"
 clinic_data <- read_csv("clinic_data .csv")
-# View(clinic_data)
+
 
 #Define "subdistrict" as factor
 clinic_data <- clinic_data %>%
@@ -164,6 +164,12 @@ dog_density <- dog_density %>%
         KK_TC_Clinic$date_admission < date - years(1) &
         KK_TC_Clinic$date_admission >= date - years(2) &
         (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
+    ),
+    effort_4y_ago = sum(
+      as.character(KK_TC_Clinic$subdistrict) == subdistrict &
+        KK_TC_Clinic$date_admission < date - years(3) &
+        KK_TC_Clinic$date_admission >= date - years(4) &
+        (grepl("castration",KK_TC_Clinic$type_surgery)|grepl("spay",KK_TC_Clinic$type_surgery))
     )
     
   ) %>%
@@ -175,19 +181,25 @@ dog_density <- dog_density %>%
     subdistrict == "KK" ~ effort_all_time/3000,
     subdistrict == "TC" ~ effort_all_time/4938))
 
-#Create total sterilization effort last 3 years by human population
+#Create total sterilization effort 1 year ago by human population
+dog_density <- dog_density %>%
+  mutate(effort_1y_humanpop = case_when(
+    subdistrict == "KK" ~ effort_4y_ago/3000,
+    subdistrict == "TC" ~ effort_4y_ago/4938))
+
+#Create total sterilization effort 3 years ago by human population
 dog_density <- dog_density %>%
   mutate(effort_3y_humanpop = case_when(
     subdistrict == "KK" ~ effort_3y_ago/3000,
     subdistrict == "TC" ~ effort_3y_ago/4938))
 
-#Create total sterilization effort last 2 years by human population
+#Create total sterilization effort 2 years ago by human population
 dog_density <- dog_density %>%
   mutate(effort_2y_humanpop = case_when(
     subdistrict == "KK" ~ effort_2y_ago/3000,
     subdistrict == "TC" ~ effort_2y_ago/4938))
 
-#Create total sterilization effort last 1 year by human population
+#Create total sterilization effort 1 year ago by human population
 dog_density <- dog_density %>%
   mutate(effort_1y_humanpop = case_when(
     subdistrict == "KK" ~ effort_1y_ago/3000,
