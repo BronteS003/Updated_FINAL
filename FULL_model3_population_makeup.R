@@ -17,15 +17,24 @@ library(RVAideMemoire) #checking for overdispersion
 library(DHARMa) #checking overdispersion visually
 library(ggeffects) #creating predicted values and visualizing them
 library(lmtest) #conducting likelihood ratio tests
-library(tidyr)
-library(car)
-library(scales)
+library(tidyr) #cleaning data
+library(car) #checking vif
+library(scales) #axis and legend label appearances
 
 ##IMPORT DATA##
 
 #Read rds for sightings file
 
 sightings <- readRDS("FULL_sightings.rds", refhook = NULL)
+
+#Investigate numbers of puppies & females
+table(sightings$Puppy) #there's 531 adults/18 puppies
+
+table(sightings$Adult.Lactating.female) # there's 540 non-lactating/9 lactating females
+
+ggplot(sightings, aes(x = as.factor(Adult.Lactating.female))) +
+  geom_bar() +
+  labs(x = "Is Lactating", y = "Count", title = "Distribution of Puppy Observations")
 
 ##CLEAN DATA - Lactating Females##
 
@@ -456,6 +465,22 @@ plot(preds_3y) +
   theme(plot.title = element_text(face = "bold", hjust = 0.5))
 
 ##Graph model 3.2 - Puppies##
+
+#Get predicted values over time since intervention
+preds_since <- ggpredict(m3_final_since, terms = "since_intervention", type = "fixed")
+
+plot(preds_since) + 
+  labs(title = "Probability of Being a Puppy by\n Time Since Intervention\n and Subdistrict",
+       x = "Time Since Intervention (Years)",
+       y = "Probability of Being Puppy") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  coord_cartesian(ylim = c(0, 22)) 
+
 
 # Get predicted values over year
 preds_puppies_3y <- ggpredict(m3_final_year, terms = "effort_3y_humanpop", type = "fixed")

@@ -20,6 +20,7 @@ library(lmtest) #conducting likelihood ratio tests
 library(tidyr) #cleaning data
 library(patchwork) #combining plots into one panel
 library(emmeans) #model comparisons
+library(car) #checking vif
 
 ##IMPORT DATA##
 

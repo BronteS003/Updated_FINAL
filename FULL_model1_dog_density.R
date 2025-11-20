@@ -299,3 +299,23 @@ p1 + p2 +
   plot_layout(guides = "collect") +
   plot_annotation(tag_levels = 'A')
 
+#Get exact values for each year
+preds_years <- ggpredict(
+  m1_final_since,
+  terms = c("since_intervention [0,1,2,3]", "subdistrict"),
+  condition = c(Track.Length = 1)
+)
+
+#Get exact values for sterilizations
+KKpreds_per100 <- ggpredict(
+  m1_final_effort,
+  terms = c("effort_humanpop [0, 0.0333, 0.0666, 0.0999]", "subdistrict[KK]"),
+condition = c(Track.Length = 1)
+)
+
+TCpreds_per100 <- ggpredict(
+  m1_final_effort,
+  terms = c("effort_humanpop [0, 0.0203, 0.0406, 0.0812]", "subdistrict[TC]"),
+  condition = c(Track.Length = 1)
+)
+  

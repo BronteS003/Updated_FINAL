@@ -21,6 +21,7 @@ library(car) #check for multicollinearity
 library(performance)
 library(emmeans)
 library(patchwork)
+library(tidyr)
 
 ##IMPORT DATA##
 
@@ -137,7 +138,7 @@ AIC(m2_final_since, m2_final_total, m2_final_year) #year has the lowest AIC
 ##CHECK FOR OVERDISPERSION##
 
 #Visually check overdispersion using DHARMa plot
-simulationOutput_model2 <- simulateResiduals(fittedModel = m2_year_final) #create simulated data
+simulationOutput_model2 <- simulateResiduals(fittedModel = m2_final_year) #create simulated data
 testDispersion(simulationOutput_model2)
 
 #Test for outliers
@@ -149,12 +150,17 @@ testZeroInflation(simulationOutput_model2)
 #Check for uniformity
 testUniformity(simulationOutput_model2)
 
+##PLOT MODELS - TOTAL EFFORT##
+
+#Get predicted values
+preds_total<-ggpredict(m2_final_total, terms = c("effort_humanpop"))
+
+#Plot predicted values
+
+
 ##PLOT MODELS##
 
-# Get predicted values over "sex"
-preds_sex <- ggpredict(m2_final_year, terms = c("sex"))
-
-# Plot Probability of Being Neutered by sex
+preds_sex <-ggpredict(m2_final_year, terms = c("sex"))
 
 library(scales)
 
@@ -182,7 +188,7 @@ ggplot(preds_sex, aes(x = x, y = predicted)) +
   )
 
 
-#create plot for probability of being sterilized by effort
+#create plot for probability of being sterilized by total effort
 
 #Get predicted values over effort
 preds_effort <- ggpredict(m2_final_total, terms = "effort_humanpop")
@@ -268,7 +274,7 @@ ggplot(preds_all, aes(x = x, y = predicted, color = Outcome, fill = Outcome)) +
   geom_line(linewidth = 1.2) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.15, color = NA) +
   labs(
-    title = "Probability of Being Neutered by Past Sterilization Effort",
+    title = "Probability of An Observed Dog Being Neutered \n at Survey Date by Past Sterilization Effort",
     x = "Sterilizations per Human Capita",
     y = "Probability of being Neutered"
   ) +
@@ -276,3 +282,11 @@ ggplot(preds_all, aes(x = x, y = predicted, color = Outcome, fill = Outcome)) +
   theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
   scale_color_manual(values = c("3 Years Ago" = "#2E86AB", "2 Years Ago" = "#E07A5F", "1 Year Ago" = "darkgreen")) +
   scale_fill_manual(values = c("3 Years Ago" = "#2E86AB", "2 Years Ago" = "#E07A5F", "1 Year Ago" = "darkgreen"))
+
+
+
+
+all_time <- ggpredict(
+  m2_final_total,
+  terms = c("effort_humanpop [0.1292517]")
+)
