@@ -59,20 +59,6 @@ sightings <- sightings %>%
 sightings <- sightings %>%
   mutate(survey = as.factor(survey))
 
-#Make column for resight
-sightings <- sightings %>%
-  mutate(
-    notes_clean = str_to_lower(Notes),
-    resight = case_when(
-      notes_clean == "resight"   ~ "Yes",
-      notes_clean == "new_dog"   ~ "No",
-      notes_clean %in% c("", NA, "blank") ~ "No",  
-      notes_clean == "unknown"   ~ "unknown",               
-      TRUE                       ~ NA                
-    )
-  ) %>%
-  select(-notes_clean)
-
 #Convert date to a date variable
 sightings <- sightings %>%
   mutate(date = substr(date, 1, 10))#just take date
