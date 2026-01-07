@@ -22,17 +22,12 @@ library(performance)
 library(emmeans)
 library(patchwork)
 library(tidyr)
-library(scales)
-
-################################################################################
 
 ##IMPORT DATA##
 
 #Read rds for sightings file
 
 sightings <- readRDS("FULL_sightings.rds", refhook = NULL)
-
-################################################################################
 
 ##CLEAN DATA##
 
@@ -44,8 +39,6 @@ sightings <- sightings %>%
 sightings <- sightings %>% 
   filter(Unknown != 1)
 
-################################################################################
-
 ##MODEL SELECTION##
 
 #Time Since Intervention
@@ -54,7 +47,6 @@ sightings <- sightings %>%
 m2_since <- glmer(Neutered ~ since_intervention + owned + subdistrict + sex +
                     (1 | polygon),
                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-summary(m2_since)
 #Check vif
 vif(m2_since) #all fine
 
@@ -72,8 +64,6 @@ drop1(m2_1since, test = "Chisq")#all variable significant
 m2_final_since <- glmer(Neutered ~ since_intervention + owned + sex +
                          (1 | polygon),
                        family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
-
-################################################################################
 
 #Total Effort
 
@@ -106,7 +96,6 @@ m2_final_total <- glmer(Neutered ~ effort_humanpop + sex +
                           (1 | polygon),
                         family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 
-################################################################################
 
 #Effort by year
 
@@ -141,12 +130,10 @@ m2_final_year <-  glmer(Neutered ~ effort_3y_humanpop + effort_2y_humanpop + eff
                          (1 | polygon),
                        family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 
-################################################################################
 
 #Compare three sterilization effort indicators
 AIC(m2_final_since, m2_final_total, m2_final_year) #year has the lowest AIC
 
-################################################################################
 
 ##CHECK FOR OVERDISPERSION##
 
@@ -163,8 +150,6 @@ testZeroInflation(simulationOutput_model2)
 #Check for uniformity
 testUniformity(simulationOutput_model2)
 
-################################################################################
-
 ##PLOT MODELS - TOTAL EFFORT##
 
 #Get predicted values
@@ -176,6 +161,8 @@ preds_total<-ggpredict(m2_final_total, terms = c("effort_humanpop"))
 ##PLOT MODELS##
 
 preds_sex <-ggpredict(m2_final_year, terms = c("sex"))
+
+library(scales)
 
 ggplot(preds_sex, aes(x = x, y = predicted)) +
   geom_col(width = 0.6, fill = "steelblue") +
@@ -302,16 +289,4 @@ ggplot(preds_all, aes(x = x, y = predicted, color = Outcome, fill = Outcome)) +
 all_time <- ggpredict(
   m2_final_total,
   terms = c("effort_humanpop [0.1292517]")
-)
-
-pred_exact <- ggpredict(
-  m2_final_total,
-  terms = c("effort_humanpop [0.0126, 0.0252, 0.0378, 0.0504, 0.0630, 0.0756, 0.0881, 0.1008, 0.1134, 0.1260]"),
-  condition = c(Track.Length = 1)
-)
-
-pred_since <- ggpredict(
-  m2_final_since,
-  terms = c("since_intervention [0, 1, 2, 3]"),
-  condition = c(Track.Length = 1)
 )

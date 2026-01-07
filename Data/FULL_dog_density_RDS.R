@@ -20,10 +20,10 @@ library(stringr) #manipulating text
 ##IMPORTING & CLEANING DATA ##
 
 #Import most up to date dog density dataset
-dog_density <- read.csv("FULL_dog_density.csv")
+dog_densityRAW <- read.csv("Data & RDS/FULL_dog_density.csv")
 
 #Rename columns
-dog_density <- dog_density %>% rename("polygon" = "Sandbox.Name", #rename so easier to remember
+dog_density <- dog_densityRAW %>% rename("polygon" = "Sandbox.Name", #rename so easier to remember
                                       "date"= "Timestamp")
 
 #Recognize polygon as a categorical variable with 7 levels
@@ -116,10 +116,10 @@ dog_density <- dog_density %>%
 ##DEFINE STERILIZATION EFFORT##
 
 #Import data set "clinic data"
-clinic_data <- read.csv("FULL_clinic_data.csv")
+clinic_dataRAW <- read.csv("Data & RDS/FULL_clinic_data.csv")
 
 #Define "subdistrict" as factor
-clinic_data <- clinic_data %>%
+clinic_data <- clinic_dataRAW %>%
   mutate(Subdistrict = as.factor(Subdistrict))
 
 #Create new data set with only regions of "Khok Kurat" and "Tha Chang"

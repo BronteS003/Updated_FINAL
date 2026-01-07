@@ -14,14 +14,15 @@ library(dplyr) #organizing and manipulating data
 library(lubridate) #formatting dates and times
 library(stringr) #manipulating text
 
+################################################################################
 
 ##IMPORT AND CLEAN DATA##
 
 ##Import Data set "sightings"
-sightings <- read.csv("FULL_sightings.csv")
+sightingsRAW <- read.csv("Data & RDS/FULL_sightings.csv")
 
 #Remove all rows that are resights
-sightings <- sightings %>%
+sightings <- sightingsRAW %>%
   filter(!str_to_lower(Notes) %in% c("resight", "unknown"))
 
 ##Rename columns
@@ -148,11 +149,12 @@ sightings<-sightings %>%
 #Remove NAs
 sightings <- na.omit(sightings) #one guy that doesn't have ownership status which then causes the model to create error messages if you don't get rid of him
 
+################################################################################
 
 ##DEFINE STERILIZATION EFFORT##
 
 #Import data set "clinic data"
-clinic_data <- read.csv("FULL_clinic_data.csv")
+clinic_data <- read.csv("Data & RDS/FULL_clinic_data.csv")
 
 #Define "subdistrict" as factor
 clinic_data <- clinic_data %>%
@@ -252,6 +254,8 @@ sightings <- sightings %>%
   mutate(effort_1y_humanpop = case_when(
     subdistrict == "KK" ~ effort_1y_ago/3000,
     subdistrict == "TC" ~ effort_1y_ago/4938))
+
+################################################################################
 
 #Save RDS
 

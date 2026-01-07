@@ -29,7 +29,25 @@ library(patchwork) #combine graphs into 1 panel
 #Read rds for dog_density file
 dog_density <- readRDS("FULL_dog_density.rds", refhook = NULL)
 
-################################################################################
+
+
+##VISUALIZING DATA##
+
+#Create jitter plot with line of best fit showing dogs per km by date and subdistrict
+ggplot(dog_density,aes(x=since_intervention,y=Sighting.Count,colour=subdistrict))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(title = "Jitter Plot with Line of Best Fit") +
+  theme_minimal()
+
+#Create jitter plot with line of best fit showing dogs per km by date and polygon
+ggplot(dog_density,aes(x=since_intervention,y=Sighting.Count,colour=polygon))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(title = "Jitter Plot with Line of Best Fit") +
+  theme_minimal()
+
+
 
 ##MODEL SELECTION##
 
@@ -40,7 +58,6 @@ m1_since_intervention <- glmer(Sighting.Count ~ since_intervention + Track.Lengt
                 (1 | polygon) +
                         offset(log(Track.Length)), 
                       family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
-summary(m1_since_intervention)
 
 # Check variance inflation factors
 vif(m1_since_intervention) # all fine
@@ -75,16 +92,14 @@ final_since_intervention <- glmer(Sighting.Count ~ since_intervention + subdistr
 ##All remaining variables are significant
 drop1(final_since_intervention, test="Chisq")
 
-################################################################################
 
 #Total Sterilization Effort
 
 #Create m1 using total sterilization effort by human population
 m1_effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + Track.Length + subdistrict + day + Mode.Transport +
-                                 (1 | polygon) +
+                                 (1 | polygon/survey) +
                                  offset(log(Track.Length)), 
                                family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
-summary(m1_effort_humanpop)
 
 # Check variance inflation factors
 vif(m1_effort_humanpop) # all fine
@@ -94,7 +109,7 @@ drop1(m1_effort_humanpop, test="Chisq")
 
 #Create updated m1, dropping day
 m1_1.effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + Track.Length + subdistrict + Mode.Transport +
-                              (1 | polygon) +
+                              (1 | polygon/survey) +
                               offset(log(Track.Length)), 
                             family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 #Test what variables should be dropped
@@ -103,7 +118,7 @@ drop1(m1_1.effort_humanpop, test="Chisq")
 
 #Create updated m1, dropping track length
 m1_2.effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + subdistrict + Mode.Transport +
-                                (1 | polygon) +
+                                (1 | polygon/survey) +
                                 offset(log(Track.Length)), 
                               family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 #Test what variables should be dropped
@@ -111,7 +126,7 @@ drop1(m1_2.effort_humanpop, test="Chisq")
 
 #Create updated m1, dropping mode.transport
 m1_3.effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + subdistrict +
-                                (1 | polygon) +
+                                (1 | polygon/survey) +
                                 offset(log(Track.Length)), 
                               family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 #Test what variables should be dropped
@@ -119,27 +134,16 @@ drop1(m1_3.effort_humanpop, test="Chisq")
 
 #Final model for effort
 m1_effort_final <- glmer(Sighting.Count ~ effort_humanpop + subdistrict +
-                                (1 | polygon) +
+                                (1 | polygon/survey) +
                                 offset(log(Track.Length)), 
                               family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 
-##################################################################################################
 
 ##Sterilization by Year##
 
-#Check for correlation between year variables
-years_effort <- dog_density %>% 
-  select(effort_4y_humanpop, effort_3y_humanpop,
-         effort_2y_humanpop, effort_1y_humanpop)
-
-corrplot(cor(years_effort, use = "pairwise.complete.obs"),
-         method = "color",
-         type = "upper",
-         tl.col = "black") #No correlation between years
-
 #Most complex m1 using years
 m1_year <- glmer(Sighting.Count ~ effort_4y_humanpop + effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
-                              (1 | polygon) +
+                              (1 | polygon/survey) +
                               offset(log(Track.Length)), 
                             family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 
@@ -151,7 +155,7 @@ drop1(m1_year, test="Chisq")
 
 #Create updated m1, dropping year 2
 m1_1year <- glmer(Sighting.Count ~ effort_4y_humanpop + effort_3y_humanpop + effort_1y_humanpop + Track.Length + subdistrict + day + Mode.Transport +
-                   (1 | polygon) +
+                   (1 | polygon/survey) +
                    offset(log(Track.Length)), 
                  family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 #Test what variables should be dropped
@@ -159,41 +163,55 @@ drop1(m1_1year, test="Chisq")
 
 #Create updated m1, dropping day
 m1_2year <- glmer(Sighting.Count ~ effort_4y_humanpop + effort_3y_humanpop + effort_1y_humanpop + Track.Length + subdistrict + Mode.Transport +
-                       (1 | polygon) +
+                       (1 | polygon/survey) +
                        offset(log(Track.Length)), 
                      family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 #Test what variables should be dropped
 drop1(m1_2year, test="Chisq")
 
-#Create updated m1, dropping mode of transport
-m1_3year <- glmer(Sighting.Count ~ effort_4y_humanpop + effort_3y_humanpop + effort_1y_humanpop + subdistrict + Track.Length +
-                    (1 | polygon) +
+#Create updated m1, dropping track.length
+m1_3year <- glmer(Sighting.Count ~ effort_4y_humanpop + effort_3y_humanpop + effort_1y_humanpop + subdistrict + Mode.Transport +
+                    (1 | polygon/survey) +
                     offset(log(Track.Length)), 
                   family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 #Test what variables should be dropped
 drop1(m1_3year, test="Chisq")
 
-#Create updated m1, dropping track length
+#Create updated m1, dropping Mode.Transport
 m1_4year <- glmer(Sighting.Count ~ effort_4y_humanpop + effort_3y_humanpop + effort_1y_humanpop + subdistrict +
-                    (1 | polygon) +
+                    (1 | polygon/survey) +
                     offset(log(Track.Length)), 
                   family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 #Test what variables should be dropped
 drop1(m1_4year, test="Chisq")
 
+#Create updated m1, dropping year 4
+m1_5year <- glmer(Sighting.Count ~ effort_3y_humanpop + effort_1y_humanpop + subdistrict +
+                    (1 | polygon/survey) +
+                    offset(log(Track.Length)), 
+                  family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+#Test what variables should be dropped
+drop1(m1_5year, test = "Chisq")
+
+#Create updated m1, dropping year 3
+m1_6year <- glmer(Sighting.Count ~ effort_1y_humanpop + subdistrict +
+                    (1 | polygon/survey) +
+                    offset(log(Track.Length)), 
+                  family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+#Test what variables should be dropped
+drop1(m1_6year, test = "Chisq")
+
 
 #Final year model
-m1_year_final <- glmer(Sighting.Count ~ effort_4y_humanpop + effort_3y_humanpop + effort_1y_humanpop + subdistrict +
-                         (1 | polygon) +
+m1_year_final <- glmer(Sighting.Count ~ effort_1y_humanpop + subdistrict +
+                         (1 | polygon/survey) +
                          offset(log(Track.Length)), 
                        family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 
-################################################################################
 
 #Compare the three models
 AIC(final_since_intervention, m1_effort_final, m1_year_final) #both since intervention and total effort are good fits with very similar AIC values (265.0773, and 265.9332)
 
-################################################################################
 
 ##Final model 1##
 
@@ -204,57 +222,67 @@ m1_final_since<- glmer(Sighting.Count ~ since_intervention + subdistrict +
                          offset(log(Track.Length)), 
                        family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 
-################################################################################
+#Final model with effort
+m1_final_effort <- glmer(Sighting.Count ~ effort_humanpop + subdistrict +
+                                           (1 | polygon/survey) +
+                                           offset(log(Track.Length)), 
+                                         family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+
 
 ##CHECK FOR OVERDISPERSION##
 
 #Check residual deviance relative to degrees of freedom
+overdisp.glmer(m1_final_effort)
 overdisp.glmer(m1_final_since)
 
 #Visually check overdispersion using DHARMa plot
+simulationOutput_m1_effort <- simulateResiduals(fittedModel = m1_final_effort) #create simulated data
+testDispersion(simulationOutput_m1_effort)
+
 simulationOutput_m1_since <- simulateResiduals(fittedModel = m1_final_since) #create simulated data
 testDispersion(simulationOutput_m1_since)
 
 #Test for outliers
+testOutliers(simulationOutput_m1_effort)
 testOutliers(simulationOutput_m1_since)
 
 #Check for zero inflation
+testZeroInflation(simulationOutput_m1_effort)
 testZeroInflation(simulationOutput_m1_since)
 
 #Check for uniformity
+testUniformity(simulationOutput_m1_effort)
 testUniformity(simulationOutput_m1_since)
 
 # Residual plots
-plot(simulationOutput_m1_since) 
+plot(simulationOutput_m1_effort)
+plot(simulationOutput_m1_since) #does this show a problem with DHARMa residuals
 
-################################################################################
 
 ##PLOTTING MODELS##
 
-# Get predicted values over time since intervention
-preds1_since <- ggpredict(m1_final_since, terms = c("since_intervention", "subdistrict"),
+# Get predicted values over all-time effort
+preds1 <- ggpredict(m1_final_effort, terms = c("effort_humanpop", "subdistrict"),
                     condition = c(Track.Length=1))
 
-#Create raw data points for graphs - summarizing the average number of dogs sight per
-# km per survey
-raw_avg <- dog_density %>%
-  group_by(survey) %>%
-  summarise(
-    mean_density = mean(Dogs.per.km, na.rm = TRUE),
-    since_intervention = first(since_intervention),   # keep variables for plotting
-    subdistrict = first(subdistrict),
-    .groups = "drop"
-  )
- 
-#Plot
-plot(preds1_since) +
-  geom_point(
-    data = raw_avg,
-    aes(x = since_intervention, y = mean_density, color = subdistrict),
-    alpha = 0.5,
-    size = 2,
-    inherit.aes = FALSE
-  ) +
+# Get predicted values over time since intervention
+preds1.1 <- ggpredict(m1_final_since, terms = c("since_intervention", "subdistrict"),
+                    condition = c(Track.Length=1))
+
+#Plots with plot function 
+p1 <- plot(preds1) + 
+  labs(title = "Predicted Sightings/km by\n All Time Sterilization Effort\n and Subdistrict",
+       x = "All Time Effort (Per Capita)",
+       y = "Predicted Sightings per Km") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "right",
+    axis.text = element_text(color = "gray30"),
+    panel.grid.minor = element_blank()) +
+  coord_cartesian(ylim = c(0, 22))   
+
+p2 <- plot(preds1.1) + 
   labs(title = "Predicted Sightings/km by\n Time Since Intervention\n and Subdistrict",
        x = "Time Since Intervention (Years)",
        y = "Predicted Sightings per Km") +
@@ -263,15 +291,31 @@ plot(preds1_since) +
     plot.title = element_text(face = "bold", hjust = 0.5),
     legend.position = "right",
     axis.text = element_text(color = "gray30"),
-    panel.grid.minor = element_blank()
-  ) +
-  coord_cartesian(ylim = c(0, 22))
+    panel.grid.minor = element_blank()) +
+  coord_cartesian(ylim = c(0, 22)) 
 
-################################################################################
-  
-#Get predicted values for number of sightings at 0 years, 1 year, 2 year, 3 year
-pred_exact <- ggpredict(
+#Combine into one panel with a shared legend
+p1 + p2 +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = 'A')
+
+#Get exact values for each year
+preds_years <- ggpredict(
   m1_final_since,
   terms = c("since_intervention [0,1,2,3]", "subdistrict"),
   condition = c(Track.Length = 1)
 )
+
+#Get exact values for sterilizations
+KKpreds_per100 <- ggpredict(
+  m1_final_effort,
+  terms = c("effort_humanpop [0, 0.0333, 0.0666, 0.0999]", "subdistrict[KK]"),
+condition = c(Track.Length = 1)
+)
+
+TCpreds_per100 <- ggpredict(
+  m1_final_effort,
+  terms = c("effort_humanpop [0, 0.0203, 0.0406, 0.0812]", "subdistrict[TC]"),
+  condition = c(Track.Length = 1)
+)
+  
