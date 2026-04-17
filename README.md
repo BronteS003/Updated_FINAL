@@ -5,6 +5,7 @@ editor_options:
 ---
 
 # Updated_FINAL - Jai Dog Data Analysis
+[![DOI](https://zenodo.org/badge/1036209075.svg)](https://doi.org/10.5281/zenodo.18255663)
 
 **Archive**
 
