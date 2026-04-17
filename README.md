@@ -4,87 +4,95 @@ editor_options:
     wrap: 72
 ---
 
-# Updated_FINAL - Jai Dog Data Analysis
+# Updated_FINAL - Jai Dog Data Analysis v2
 [![DOI](https://zenodo.org/badge/1036209075.svg)](https://doi.org/10.5281/zenodo.18255663)
 
-**Archive**
+### Archive
 
-All code from previous iterations of analysis using 2021, 2023,and 2024
-data
+##### All code from previous iterations of analysis using 2021, 2023,and 2024 data
 
-**Data & RDS**
+### Data Visualizations
 
-All final data files as well as RDS code and files.
+##### All code for plotting, mapping, and general visualizations
 
-FULL_clinic_data.csv - All clinic data from Jai Dog's mobile and static
+FULL_sterilizations_overtime.R - Plotting all sterilizations over time and by subdistrict.
+
+KAP_survey.R - Visualizing and looking at frequency of different variables in KAP survey.
+
+clinic_rough_work.R <- Looking at misc. aspects of clinic data such as seasonality of pregnancies and
+the ownership status of dogs admitted to clinic
+
+mapping_panel.R <- Code for all map panels in final paper
+
+sex_proportion.R <- Looking at male:female ratio of dogs admitted to clinic versus seen in survey to understand
+if representative.
+
+### Data
+
+##### All final data files as well as RDS code and files.
+
+FULL_clinic_data.csv - All clinic data (2021-2025) from Jai Dog's mobile and static
 clinic recording all admissions including sterilizations.
 
 FULL_clinic_data.rds - RDS file of cleaned clinic data for use in all
 models.
 
-FULL_dog_density.csv - All observations from Jai Dog's sight and resight
+FULL_dog_density.csv - All observations (2021-2025) from Jai Dog's sight and resight
 surveys summarized by each survey conducted.
 
-FULL_dog_density.rds - RDS file of cleaned dog density data for use in
-all models.
+FULL_dog_density.rds - RDS file of cleaned dog density data for use in v2 model 1 - dog density.
 
 FULL_dog_density_RDS.R - Code cleaning and formatting the
-FULL_dog_density data set for use in all subsequent models.
+FULL_dog_density data set for use in all v2 model 1 dog density.
 
-FULL_sightings.csv - All observations from Jai Dog's sight and resight
+FULL_sightings.csv - All observations (2021-2025) from Jai Dog's sight and resight
 surveys organized where each row is one dog observation.
 
 FULL_sightings.rds - RDS file of cleaned sightings data for use in all
-models.
+v2 models.
 
 FULL_sightings_RDS.R - Code cleaning and formatting the FULL_sightings
 data set for use in all subsequent models.
 
-**Data Visualizations**
+KAP.csv - Raw KAP survey responses.
 
-Any code used to create visualizations of data, separate from models or
-predictions.
+obs_no_resights_rds.R - Code for updated sightings_v3.rds file combining track.length and mode of transport variables from dog density data set, with dog observations from sight surveys and measures of sterilization effort from clinic data. 
 
-FULL_sterilizations_overtime.R - Code for plotting the rate of
-sterilizations in each subdistrict overtime (by month and by year).
+sighting_v3.rds - Most up to dataset of all cleaned observations.
 
-**Models**
 
-Code for all models.
+### Models
 
-FULL_model1_dog_density.R - All code for model 1 looking at the effect
-on dog density.
+##### Code for all models.
 
-FULL_model2_sterilization_status.R - All code for model 2 looking at the
-change in the likelihood a dog is sterilized.
+v2_day_comparison.R - Code exploring comparison of day 1 and day 2 sightings 
+and if they are significant for dog count.
 
-FULL_model3_population_makeup.R - All code for model 3 looking at the
-likelihood a dog is a lactating female or puppy.
+v2_model1_dog_density.R - Old version using FULL_sightings.rds including resights.
+All code for model 1 dog density examining change in dog density against all measures of sterilization effort. 
 
-FULL_model4_health_status.R - All code for model 4 looking at the
-likelihood a dog is healthy.
+v2_model2_sterilization_status.R - Old version - All code for model 2 sterilization status 
+examining the probability a dog is sterilized based on all measures of sterilization effort. 
 
-day_comparison.R - All code looking at whether the day of surveying has
-a significant impact on dog count and if the two days of surveying are
-statistically different.
+v2_model3_population_makeup.R - Old version - All code for model 3 looking at the
+likelihood a dog is a lactating female or puppy based on all measures of sterilization effort.
 
-**Plots**
+v2_model4_health_status.R - Old version - All code for model 4 looking at the
+likelihood a dog is healthy based on all measures of sterilization effort.
 
-All plots for models and data visualization.
+v3_m1_density.R - Latest version using updated sighting_v3.rds - All code for model 1 dog density 
+examining change in dog density against all measures of sterilization effort. 
 
-FULL_m1_plots.jpeg - Plots showing the probability of observing a dog
-per km over total sterilization effort and time since the peak of the
-intervention.
+v3_m2_sterilization.R - Latest version cleaned up formatting - All code for model 2 sterilization status 
+examining the probability a dog is sterilized based on all measures of sterilization effort. 
 
-FULL_m2_probability_sex.jpeg - Plot showing the probability that a dog
-is sterilized by sex.
+v3_m3_sterilization.R - Latest version cleaned up formatting - All code for model 3 looking at the
+likelihood a dog is a lactating female or puppy based on all measures of sterilization effort.
 
-FULL_m2_sterilization_effort_plots.jpeg - Plot showing the probability
-of a dog being neutered by sterilization effort in past years.
+v3_m4_health.R - Latest version cleaned up formatting - All code for model 4 looking at the
+likelihood a dog is healthy based on all measures of sterilization effort.
 
-FULL_sterilizations_by_month.jpeg - Plot showing the number of
-sterilizations conducted each month from Spring 2022 to Autumn 2025 for
-each subdistrict.
 
-FULL_total_annual_sterilizations.jpeg - Plot showing the number of
-sterilizations each year (2022-2025) by subdistrict.
+### Plots
+
+##### All plots for models and data visualization.
