@@ -22,22 +22,29 @@ library(performance)
 library(emmeans)
 library(patchwork)
 library(tidyr)
+library(scales)
+
+################################################################################
 
 ##IMPORT DATA##
 
 #Read rds for sightings file
 
-sightings <- readRDS("FULL_sightings.rds", refhook = NULL)
+sightings <- readRDS("Data/FULL_sightings.rds", refhook = NULL)
+
+################################################################################
 
 ##CLEAN DATA##
 
-#Remove puppies as they're not relevant to analysis
+#Remove puppies as they're not relevant to analysis (cannot be sterilized)
 sightings <- sightings %>% 
   filter(Puppy != 1)
 
 #Remove adults with unknown sterilization status 
 sightings <- sightings %>% 
   filter(Unknown != 1)
+
+################################################################################
 
 ##MODEL SELECTION##
 
@@ -47,6 +54,7 @@ sightings <- sightings %>%
 m2_since <- glmer(Neutered ~ since_intervention + owned + subdistrict + sex +
                     (1 | polygon),
                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+summary(m2_since)
 #Check vif
 vif(m2_since) #all fine
 
@@ -64,6 +72,8 @@ drop1(m2_1since, test = "Chisq")#all variable significant
 m2_final_since <- glmer(Neutered ~ since_intervention + owned + sex +
                          (1 | polygon),
                        family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+
+################################################################################
 
 #Total Effort
 
@@ -96,6 +106,7 @@ m2_final_total <- glmer(Neutered ~ effort_humanpop + sex +
                           (1 | polygon),
                         family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 
+################################################################################
 
 #Effort by year
 
@@ -130,10 +141,12 @@ m2_final_year <-  glmer(Neutered ~ effort_3y_humanpop + effort_2y_humanpop + eff
                          (1 | polygon),
                        family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 
+################################################################################
 
 #Compare three sterilization effort indicators
 AIC(m2_final_since, m2_final_total, m2_final_year) #year has the lowest AIC
 
+################################################################################
 
 ##CHECK FOR OVERDISPERSION##
 
@@ -150,6 +163,8 @@ testZeroInflation(simulationOutput_model2)
 #Check for uniformity
 testUniformity(simulationOutput_model2)
 
+################################################################################
+
 ##PLOT MODELS - TOTAL EFFORT##
 
 #Get predicted values
@@ -161,8 +176,6 @@ preds_total<-ggpredict(m2_final_total, terms = c("effort_humanpop"))
 ##PLOT MODELS##
 
 preds_sex <-ggpredict(m2_final_year, terms = c("sex"))
-
-library(scales)
 
 ggplot(preds_sex, aes(x = x, y = predicted)) +
   geom_col(width = 0.6, fill = "steelblue") +
@@ -270,11 +283,10 @@ preds_2y$Outcome <- "2 Years Ago"
 preds_1y$Outcome <- "1 Year Ago"
 preds_all <- rbind(preds_3y, preds_2y,preds_1y)
 
-ggplot(preds_all, aes(x = x, y = predicted, color = Outcome, fill = Outcome)) +
+sterilization_change <- ggplot(preds_all, aes(x = x, y = predicted, color = Outcome, fill = Outcome)) +
   geom_line(linewidth = 1.2) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.15, color = NA) +
   labs(
-    title = "Probability of An Observed Dog Being Neutered \n at Survey Date by Past Sterilization Effort",
     x = "Sterilizations per Human Capita",
     y = "Probability of being Neutered"
   ) +
@@ -283,10 +295,23 @@ ggplot(preds_all, aes(x = x, y = predicted, color = Outcome, fill = Outcome)) +
   scale_color_manual(values = c("3 Years Ago" = "#2E86AB", "2 Years Ago" = "#E07A5F", "1 Year Ago" = "darkgreen")) +
   scale_fill_manual(values = c("3 Years Ago" = "#2E86AB", "2 Years Ago" = "#E07A5F", "1 Year Ago" = "darkgreen"))
 
-
+#save plot
+ggsave("Plots/Model2_Sterilization_Effort_Change.png", plot = sterilization_change, width = 8, height = 6, dpi = 300)
 
 
 all_time <- ggpredict(
   m2_final_total,
   terms = c("effort_humanpop [0.1292517]")
+)
+
+pred_exact <- ggpredict(
+  m2_final_total,
+  terms = c("effort_humanpop [0.0126, 0.0252, 0.0378, 0.0504, 0.0630, 0.0756, 0.0881, 0.1008, 0.1134, 0.1260]"),
+  condition = c(Track.Length = 1)
+)
+
+pred_since <- ggpredict(
+  m2_final_since,
+  terms = c("since_intervention [0, 1, 2, 3]"),
+  condition = c(Track.Length = 1)
 )

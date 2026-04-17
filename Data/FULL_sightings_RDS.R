@@ -73,11 +73,11 @@ dup_rows <- sightings %>%
   group_by(survey, date) %>%
   summarise(n = n(), .groups = "drop")
 
-#Correct dates for TC 12_2024 
+#Correct dates for TC 12_2024 (showing up as all on same day)
 sightings <- sightings %>%
   mutate(date = if_else(
-    survey == "TC 12_2024" & Notes %in% c("new_dog", "resight"),
-    date + days(2),
+    survey == "TC 12_2024" & Notes %in% c("new_dog", "resight"), #any that are labelled as "new_dog" or "resight" have to be from a 2nd day of surveying
+    date + days(2), #correct day for these dogs from day 2
     date
   ))
 

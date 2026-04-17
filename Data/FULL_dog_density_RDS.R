@@ -20,7 +20,7 @@ library(stringr) #manipulating text
 ##IMPORTING & CLEANING DATA ##
 
 #Import most up to date dog density dataset
-dog_densityRAW <- read.csv("Data & RDS/FULL_dog_density.csv")
+dog_densityRAW <- read.csv("Data/FULL_dog_density.csv")
 
 #Rename columns
 dog_density <- dog_densityRAW %>% rename("polygon" = "Sandbox.Name", #rename so easier to remember
@@ -116,7 +116,7 @@ dog_density <- dog_density %>%
 ##DEFINE STERILIZATION EFFORT##
 
 #Import data set "clinic data"
-clinic_dataRAW <- read.csv("Data & RDS/FULL_clinic_data.csv")
+clinic_dataRAW <- read.csv("Data/FULL_clinic_data.csv")
 
 #Define "subdistrict" as factor
 clinic_data <- clinic_dataRAW %>%
@@ -220,9 +220,9 @@ dog_density <- dog_density %>%
 ##Save as objects
 
 #dog_density
-saveRDS(dog_density, file = "FULL_dog_density.rds", ascii = FALSE, version = NULL,
+saveRDS(dog_density, file = "Data/FULL_dog_density.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
 #refined clinic data with only KK_TC_Clinic
-saveRDS(KK_TC_Clinic, file = "FULL_clinic_data.rds", ascii = FALSE, version = NULL,
+saveRDS(KK_TC_Clinic, file = "Data/FULL_clinic_data.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)

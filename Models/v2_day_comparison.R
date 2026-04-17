@@ -3,7 +3,7 @@
 ################################################################################
 ## Comparisons between day 1 and day 2 of dog sightings                       ##
 ################################################################################
-## Created Nov. 18, 2025, by Bronte Slote, last edited Nov. 18, 2025          ##
+## Created Nov. 18, 2025, by Bronte Slote, last edited Mar. 23, 2025          ##
 ################################################################################
 
 
@@ -17,12 +17,15 @@ library(ggeffects)
 library(glmmTMB)
 library(DHARMa)
 
-##IMPORT DATA##
+
+
+################################################################################
 
 ##IMPORT AND CLEAN DATA##
 
 ##Import Data set "sightings"
-sightings <- read.csv("FULL_sightings.csv")
+sightingsRDS <- readRDS("Data/FULL_sightings.rds", refhook = NULL)
+sightings <- read.csv("Data/FULL_sightings.csv") 
 
 ##Rename columns
 sightings <- sightings %>% rename("polygon" = "Sandbox.Name",#rename so easier to remember

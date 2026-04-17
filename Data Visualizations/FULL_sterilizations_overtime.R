@@ -4,7 +4,7 @@
 # Plotting clinic data overtime to visualize the number of sterilizations      #
 # conducted overtime.                                                          #
 ################################################################################
-# Created Oct. 15, 2025 by Bronte Slote, last modified Oct. 15, 2025           #
+# Created Oct. 15, 2025 by Bronte Slote, last modified Mar. 3, 2026            #
 ################################################################################
 
 ##Load Libraries
@@ -15,7 +15,7 @@ library(scales)
 library(grid)
 
 ##Import clinic data
-clinic_data <- readRDS("FULL_clinic_data.rds", refhook = NULL)
+clinic_data <- readRDS("Data/FULL_clinic_data.rds", refhook = NULL)
 
 
 ##Clean data
@@ -107,7 +107,6 @@ p <- ggplot(clinic_data, aes(x = month, y = surgery_counts, fill = subdistrict))
     labels = date_format("%Y")
   ) +
   labs(
-    title = "Number of Sterilizations Conducted per Month",
     x = "Year / Quarter",
     y = "Number of Surgeries"
   ) +
@@ -140,7 +139,8 @@ p <- p + geom_segment(
 ) +
   coord_cartesian(clip = "off")
 
-p
+ggsave("Plots/FULL_sterilizations_by_month.png", p, width = 8, height = 6, dpi = 300)
+
 
 #Plot by year
 ggplot(clinic_data, aes(x = year, y = surgery_counts, fill = subdistrict)) +
