@@ -2,7 +2,7 @@
 ##            Model 2: Change in Sterilization Status                         ##
 ################################################################################
 # Model testing effects of sterilization effort on the probability that a dog  #
-# is sterilized.Using updated RDS file.                                        #
+# is sterilized. Using updated RDS file.                                        #
 ################################################################################
 # Created April 16, 2026, by Bronte Slote, last edited April 16, 2026          #
 ################################################################################
@@ -56,7 +56,7 @@ m2.1_since <- glmer(Neutered ~ since_intervention + owned + sex +
 summary(m2.1_since)
 
 #Drop 1 test
-drop1(m2.1_since, test = "Chisq") #all significant
+drop1(m2.1_since, test = "Chisq") 
 
 ################################################################################
 
@@ -82,10 +82,6 @@ plot(simulationOutput_m2_since)
 
 ##FIT MODEL - TOTAL STERILIZATION EFFORT##
 
-#Scale effort across all time
-sightings <- sightings %>% 
-  mutate(sc_total = scale(effort_all_time))
-
 #Most complex model
 m2_total <- glmer(Neutered ~ sc_total + owned + subdistrict + sex +
                     (1 | polygon),
@@ -96,18 +92,18 @@ summary(m2_total)
 vif(m2_total)
 
 #Drop 1 test
-drop1(m2_total, test = "Chisq") #drop owned
+drop1(m2_total, test = "Chisq") #drop subdistrict
 
-#updated model 2 dropping owned
-m2.1_total <- glmer(Neutered ~ sc_total + subdistrict + sex +
+#updated model 2 dropping subdistrict
+m2.1_total <- glmer(Neutered ~ sc_total + owned + sex +
                     (1 | polygon),
                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 summary(m2.1_total)
 
 #Drop 1 test
-drop1(m2.1_total, test = "Chisq") #drop subdistrict
+drop1(m2.1_total, test = "Chisq") #drop owned
 
-#updated model 2 dropping subdistrict
+#updated model 2 dropping owned
 m2.2_total <- glmer(Neutered ~ sc_total + sex +
                       (1 | polygon),
                     family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
@@ -140,13 +136,6 @@ plot(simulationOutput_m2_total)
 
 ##FIT MODEL - YEARLY STERILIZATION EFFORT##
 
-#Scale yearly effort measures
-sightings <- sightings %>%
-  mutate(sc_4y = scale(effort_4y_ago),
-         sc_3y = scale(effort_3y_ago),
-         sc_2y = scale(effort_2y_ago),
-         sc_1y = scale(effort_1y_ago))
-
 #Most complex model
 m2_year <- glmer(Neutered ~ sc_4y + sc_3y + sc_2y + sc_1y + owned + subdistrict + sex +
                    (1 | polygon),
@@ -166,23 +155,32 @@ m2.1_year <- glmer(Neutered ~ sc_3y + sc_2y + sc_1y + owned + subdistrict + sex 
 summary(m2.1_year)
 
 #Drop 1 test
-drop1(m2.1_year, test = "Chisq") #drop owned
+drop1(m2.1_year, test = "Chisq") #drop subdistrict
 
 #updated model 2 dropping owned
-m2.2_year <- glmer(Neutered ~ sc_3y + sc_2y + sc_1y + subdistrict + sex +
+m2.2_year <- glmer(Neutered ~ sc_3y + sc_2y + sc_1y + owned + sex +
                    (1 | polygon),
                  family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
 summary(m2.2_year)
 
 #Drop 1 test
-drop1(m2.2_year, test = "Chisq") #all significant
+drop1(m2.2_year, test = "Chisq") #drop owned
+
+#updated model 2 dropping owned
+m2.3_year <- glmer(Neutered ~ sc_3y + sc_2y + sc_1y + sex +
+                     (1 | polygon),
+                   family = binomial, data = sightings, control = glmerControl(optimizer = "bobyqa"))
+summary(m2.3_year)
+
+#Drop 1 test
+drop1(m2.3_year, test = "Chisq") #all good
 
 ################################################################################
 
 ##CHECK OVERDISPERSION##
 
 #Check residual deviance relative to degrees of freedom
-overdisp.glmer(m2.2_year) #good 0.959
+overdisp.glmer(m2.2_year) #good 0.966
 
 #Check with DHARMa
 simulationOutput_m2_year <- simulateResiduals(fittedModel = m2.2_year) #create simulated data
@@ -202,7 +200,7 @@ plot(simulationOutput_m2_year)
 ##MODEL COMPARISON##
 
 #Compare models with AIC
-AIC(m2.1_since, m2.2_total, m2.2_year) #year is the best fit with the lowest AIC (504.8550), then total (477.8754) and since (504.8550)
+AIC(m2.1_since, m2.2_total, m2.3_year) #year is the best fit with the lowest AIC (504.8550), then total (477.8754) and since (504.8550)
 
 ################################################################################
 
@@ -269,7 +267,7 @@ ggplot(preds_total, aes(x = x, y = predicted, color = group)) +
   geom_line(linewidth = 1) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2) +
   labs(title = "Probability of being Neutered by\n Total Sterilization Effort\n and Sex",
-       x = "Total Sterilization (Scaled)",
+       x = "Total Dog Sterilizations Conducted (Per Human Capita)",
        y = "Probability of Being Neutered") +
   theme_minimal(base_size = 14) +
   theme(
@@ -289,7 +287,7 @@ preds_3y <- ggpredict(m2.2_year, terms = "sc_3y", type = "fixed")
 plot(preds_3y) +
   labs(
     title = "Predicted Probability of Being Neutered\nvs Sterilization Effort 3 Years Ago",
-    x = "Sterilizations 3 Years Ago (scaled)",
+    x = "Total Sterilizations Conducted 3 Years Ago (Per Human Capita)",
     y = "Probability of Being Neutered"
   ) +
   theme_minimal(base_size = 14) +
@@ -301,7 +299,7 @@ preds_2y <- ggpredict(m2.2_year, terms = "sc_2y", type = "fixed")
 plot(preds_2y) +
   labs(
     title = "Predicted Probability of Being Neutered\nvs Sterilization Effort 2 Years Ago",
-    x = "Sterilizations 2 years ago (scaled)",
+    x = "Total Sterilizations 2 years ago (Per Human Capita)",
     y = "Probability of Being Neutered"
   ) +
   theme_minimal(base_size = 14) +
@@ -313,7 +311,7 @@ preds_1y <- ggpredict(m2.2_year, terms = "sc_1y", type = "fixed")
 plot(preds_1y) +
   labs(
     title = "Predicted Probability of Being Neutered\nvs Sterilization Effort 1 Year Ago",
-    x = "Sterilizations 1 year ago (scaled)",
+    x = "Total Sterilizations 1 year ago (Per Human Capita)",
     y = "Probability of Being Neutered"
   ) +
   theme_minimal(base_size = 14) +
@@ -329,7 +327,7 @@ ggplot(preds_all, aes(x = x, y = predicted, color = Outcome, fill = Outcome)) +
   geom_line(linewidth = 1.2) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.15, color = NA) +
   labs(
-    x = "Number of Sterilizations (Scaled)",
+    x = "Number of Sterilizations (Per Human Capita)",
     y = "Probability of being Neutered"
   ) +
   theme_minimal(base_size = 14) +

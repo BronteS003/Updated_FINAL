@@ -2,7 +2,7 @@
 ##                        Model 1: Dog Density                                ##
 ################################################################################
 # Model testing the effects of sterilization effort on dog density. Using      #
-# updated RDS file with no resights.                                           #
+# updated RDS file with no resights. V3 removes all resights and uses scale()  #
 ################################################################################
 # Created April 15, 2026 by Bronte Slote, last edited April 16, 2026           #
 ################################################################################
@@ -30,8 +30,8 @@ sightings <- readRDS("Data/sightings_v3.rds")
 
 ##CREATE SUMMARY DATASET OF NUMBER OF DOGS OBSERVED PER DAY##
 dog_density <- sightings %>%
-  group_by(Timestamp, polygon, subdistrict, day, Mode.Transport, Track.Length, since_intervention,
-           effort_all_time, effort_4y_ago, effort_3y_ago, effort_2y_ago, effort_1y_ago) %>%
+  group_by(Timestamp, polygon, subdistrict, day, Mode.Transport, Track.Length, since_intervention, sc_total,
+           effort_all_time, effort_4y_ago, sc_4y, effort_3y_ago, sc_3y, effort_2y_ago, sc_2y, effort_1y_ago, sc_1y) %>%
   summarise(Sighting.Count = n()) %>%
   ungroup()
 
@@ -57,7 +57,7 @@ drop1(m1_since, test = "Chisq") #all significant
 ##CHECK OVERDISPERSION##
 
 #Check residual deviance relative to degrees of freedom
-overdisp.glmer(m1_since) #okaay, 1.861, not ideal but not terrible
+overdisp.glmer(m1_since) #1.902, close to concerning(?)
 
 #Check with DHARMa
 simulationOutput_m1_since <- simulateResiduals(fittedModel = m1_since) #create simulated data
@@ -75,10 +75,6 @@ plot(simulationOutput_m1_since)
 ################################################################################
 
 ##FIT MODEL TOTAL EFFORT##
-
-#scale effort_all_time to solve convergence issues
-dog_density <- dog_density %>%
-  mutate(sc_total = scale(effort_all_time))
 
 #most complex model
 m1_total <- glmer(Sighting.Count ~ sc_total + subdistrict + day + Mode.Transport +
@@ -98,7 +94,7 @@ drop1(m1_total, test = "Chisq") #all significant
 ##CHECK OVERDISPERSION##
 
 #Check residual deviance relative to degrees of freedom
-overdisp.glmer(m1_total) #okaay, 1.889, not ideal but not terrible
+overdisp.glmer(m1_total) #1.939 close to concerning(?)
 
 #Check with DHARMa
 simulationOutput_m1_total <- simulateResiduals(fittedModel = m1_total) #create simulated data
@@ -119,20 +115,13 @@ plot(simulationOutput_m1_total)
 
 #Check for correlation between year variables
 years_effort <- dog_density %>% 
-  select(effort_4y_ago, effort_3y_ago,
-         effort_2y_ago, effort_1y_ago)
+  select(sc_4y, sc_3y,
+         sc_2y, sc_1y)
 
 corrplot(cor(years_effort, use = "pairwise.complete.obs"),
          method = "color",
          type = "upper",
          tl.col = "black") #No severe correlation between years
-
-#scale yearly effort variable to solve convergence issues
-dog_density <- dog_density %>%
-  mutate(sc_4y = scale(effort_4y_ago),
-         sc_3y = scale(effort_3y_ago),
-         sc_2y = scale(effort_2y_ago),
-         sc_1y = scale(effort_1y_ago))
 
 #most complex models
 m1_year <- glmer(Sighting.Count ~ sc_4y + sc_3y + sc_2y + sc_1y + subdistrict + day + Mode.Transport +
@@ -145,19 +134,19 @@ summary(m1_year)
 vif(m1_year) #all good
 
 #drop 1
-drop1(m1_year, test = "Chisq") #drop 2y
+drop1(m1_year, test = "Chisq") #drop 1y
 
-#updated model without 2y effort
-m1.1_year <- glmer(Sighting.Count ~ sc_4y + sc_3y + sc_1y + subdistrict + day + Mode.Transport +
+#updated model without 1y effort
+m1.1_year <- glmer(Sighting.Count ~ sc_4y + sc_3y + sc_2y + subdistrict + day + Mode.Transport +
                    (1 | polygon) +
                    offset(log(Track.Length)), 
                  family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 summary(m1.1_year)
 
 #drop 1
-drop1(m1.1_year, test = "Chisq")#drop 1y
+drop1(m1.1_year, test = "Chisq")#drop 2y
 
-#updated model without 1y effort
+#updated model without 2y effort
 m1.2_year <- glmer(Sighting.Count ~ sc_4y + sc_3y + subdistrict + day + Mode.Transport +
                      (1 | polygon) +
                      offset(log(Track.Length)), 
@@ -172,7 +161,7 @@ drop1(m1.2_year, test = "Chisq")#all significant
 ##CHECK OVERDISPERSION##
 
 #Check residual deviance relative to degrees of freedom
-overdisp.glmer(m1.2_year) #okaay, 1.845, not ideal but not terrible
+overdisp.glmer(m1.2_year) #1.882, not great but not terrible (?)
 
 #Check with DHARMa
 simulationOutput_m1_year <- simulateResiduals(fittedModel = m1_year) #create simulated data
@@ -292,7 +281,7 @@ ggplot(preds_total, aes(x = x, y = predicted, color = group)) +
     inherit.aes = FALSE
   ) +
   labs(title = "Predicted Sightings/km by\n Total Effort (Scaled)\n and Subdistrict",
-       x = "Total Sterilization Effort (Scaled)",
+       x = "Total Dog Sterilizations (per Human Capita)",
        y = "Predicted Sightings per Km") +
   theme_minimal(base_size = 14) +
   theme(
@@ -317,7 +306,7 @@ ggplot(preds_total_days, aes(x = x, y = predicted, color = group)) +
     inherit.aes = FALSE
   ) +
   labs(title = "Predicted Sightings/km by\n Total Sterilization Effort (scaled)\n and Day",
-       x = "Total Sterilization Effort (Scaled)",
+       x = "Total Dog Sterilizations (per Human Capita)",
        y = "Predicted Sightings per Km") +
   theme_minimal(base_size = 14) +
   theme(
@@ -342,7 +331,7 @@ ggplot(preds_total_transport, aes(x = x, y = predicted, color = group)) +
     inherit.aes = FALSE
   ) +
   labs(title = "Predicted Sightings/km by\n Total Effort (scaled)\n and Mode of Transport",
-       x = "Total Sterilization Effort (Scaled)",
+       x = "Total Dog Sterilizations (per Human Capita)",
        y = "Predicted Sightings per Km") +
   theme_minimal(base_size = 14) +
   theme(
@@ -371,7 +360,7 @@ ggplot(preds_year4, aes(x = x, y = predicted, color = group)) +
     inherit.aes = FALSE
   ) +
   labs(title = "Predicted Sightings/km by\n Sterilization Effort 4 Years Ago (scaled)\n and Subdistrict",
-       x = "Sterilization Effort 4 Years Ago (scaled)",
+       x = "Total Sterilizations 4 Years Ago (Per Human Capita)",
        y = "Predicted Sightings per Km") +
   theme_minimal(base_size = 14) +
   theme(
@@ -396,7 +385,7 @@ ggplot(preds_year3, aes(x = x, y = predicted, color = group)) +
     inherit.aes = FALSE
   ) +
   labs(title = "Predicted Sightings/km by\n Sterilization Effort 3 Years Ago (scaled)\n and Subdistrict",
-       x = "Sterilization Effort 3 Years Ago (scaled)",
+       x = "Total Sterilizations 3 Years Ago (Per Human Capita)",
        y = "Predicted Sightings per Km") +
   theme_minimal(base_size = 14) +
   theme(

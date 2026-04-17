@@ -85,10 +85,6 @@ summary(m4.5_since) #not significant
 
 ##MODEL SELECTION - TOTAL EFFORT##
 
-#Scale effort variable
-sightings <- sightings %>%
-  mutate(sc_total = scale(effort_all_time))
-
 #Most complex model
 m4_total <- glmer(Healthy ~ sc_total +
                     (1 | polygon),
@@ -98,13 +94,6 @@ summary(m4_total)#not significant
 ################################################################################
 
 ##MODEL SELECTION -YEARLY EFFORT##
-
-#Scale effort variables
-sightings <- sightings %>%
-  mutate(sc_4y = scale(effort_4y_ago),
-         sc_3y = scale(effort_3y_ago),
-         sc_2y = scale(effort_2y_ago),
-         sc_1y = scale(effort_1y_ago))
 
 #Most complex model
 m4_year <- glmer(Healthy ~ sc_4y + sc_3y + sc_2y + sc_1y +

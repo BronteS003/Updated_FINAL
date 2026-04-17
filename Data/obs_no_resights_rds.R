@@ -306,6 +306,40 @@ no_resights_sightings <- no_resights_sightings %>%
 
 ################################################################################
 
+##Scale Effort variables by human population in Subdistrict##
+
+#Create total sterilization effort by human population
+no_resights_sightings <- no_resights_sightings %>%
+  mutate(sc_total = case_when(
+    subdistrict == "KK" ~ effort_all_time/3000,
+    subdistrict == "TC" ~ effort_all_time/4938))
+
+#Create total sterilization effort 1 year ago by human population
+no_resights_sightings <- no_resights_sightings %>%
+  mutate(sc_4y = case_when(
+    subdistrict == "KK" ~ effort_4y_ago/3000,
+    subdistrict == "TC" ~ effort_4y_ago/4938))
+
+#Create total sterilization effort 3 years ago by human population
+no_resights_sightings <- no_resights_sightings %>%
+  mutate(sc_3y = case_when(
+    subdistrict == "KK" ~ effort_3y_ago/3000,
+    subdistrict == "TC" ~ effort_3y_ago/4938))
+
+#Create total sterilization effort 2 years ago by human population
+no_resights_sightings <- no_resights_sightings %>%
+  mutate(sc_2y = case_when(
+    subdistrict == "KK" ~ effort_2y_ago/3000,
+    subdistrict == "TC" ~ effort_2y_ago/4938))
+
+#Create total sterilization effort 1 year ago by human population
+no_resights_sightings <- no_resights_sightings %>%
+  mutate(sc_1y = case_when(
+    subdistrict == "KK" ~ effort_1y_ago/3000,
+    subdistrict == "TC" ~ effort_1y_ago/4938))
+
+################################################################################
+
 #Remove missing values
 no_resights_sightings <- na.omit(no_resights_sightings) #one dog that doesn't have ownership info
 

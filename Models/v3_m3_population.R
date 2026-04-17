@@ -1,8 +1,8 @@
 ################################################################################
 ##        MODEL 3.1 AND 3.2 - LACTATING FEMALES AND PUPPIES                   ##
 ################################################################################
-# Predicting the probability that a female is lactating (m3.1) and that a dog  #
-# is a female.                                                                 #
+# Predicting the probability that a female dog is lactating (m3.1) and that a  #
+# dog is a puppy.                                                                #
 ################################################################################
 # Created April 16, 2026 by Bronte Slote last edited April 16, 2026            #
 ################################################################################
@@ -67,10 +67,6 @@ drop1(m3.1_2since, test = "Chisq") #None of the variables are significant
 
 ##MODEL SELECTION LACTATING FEMALES - TOTAL EFFORT##
 
-#scale effort_all_time
-pop_sightings <- pop_sightings %>%
-  mutate(sc_total = scale(effort_all_time))
-
 #Most complex model
 m3.1_effort <- glmer(Adult.Lactating.female ~ sc_total + owned + subdistrict +
                        (1 | polygon),
@@ -95,20 +91,13 @@ drop1(m3.1.2_effort, test = "Chisq")#None of the variables are significant
 
 ##MODEL SELECTION LACTATING FEMALES - YEARLY EFFORT##
 
-#scales yearly effort variables
-pop_sightings <- pop_sightings %>%
-  mutate(sc_4y = scale(effort_4y_ago),
-         sc_3y = scale(effort_3y_ago),
-         sc_2y = scale(effort_2y_ago),
-         sc_1y = scale(effort_1y_ago))
-
 #most complex model
 m3.1_year <- glmer(Adult.Lactating.female ~ sc_4y + sc_3y + sc_2y + sc_1y + owned + subdistrict +
                      (1 | polygon),
                    family = binomial, data = pop_sightings, control = glmerControl(optimizer = "bobyqa"))
 summary(m3.1_year)
-vif(m3.1_year) #bad multicollinearity between yearly effort variables, drop 1y
-m3.1_year <- glmer(Adult.Lactating.female ~ sc_4y + sc_3y + sc_2y + owned + subdistrict +
+vif(m3.1_year) #bad multicollinearity between yearly effort variables, drop 2y
+m3.1_year <- glmer(Adult.Lactating.female ~ sc_4y + sc_3y + sc_1y + owned + subdistrict +
                      (1 | polygon),
                    family = binomial, data = pop_sightings, control = glmerControl(optimizer = "bobyqa"))
 vif(m3.1_year) #all good now
@@ -202,35 +191,31 @@ plot(simulationOutput_m3_effort)
 ##MODEL SELECTION PUPPIES - YEARLY EFFORT##
 
 #Most complex model
-m3.2_year <- glm(Puppy ~ effort_4y_ago + effort_3y_ago + effort_2y_ago + effort_1y_ago + owned + subdistrict,
+m3.2_year <- glm(Puppy ~ effort_4y_ago + effort_2y_ago + effort_1y_ago + owned + subdistrict,
                    family = binomial, data = sightings)
+#effort 3y ago is a problem - fitted probabilities numerically 0 or 1 occurred, so removed
 vif(m3.2_year) #bad multicollinearity between yearly effort variables, drop 1y
-m3.2_year <- glm(Puppy ~ effort_4y_ago + effort_3y_ago + effort_2y_ago + owned + subdistrict,
+m3.2_year <- glm(Puppy ~ effort_4y_ago + effort_2y_ago + owned + subdistrict,
                  family = binomial, data = sightings)
 vif(m3.2_year) #all good now
 drop1(m3.2_year, test = "Chisq") #drop 4y ago
 
 #Updated model dropping 4y ago
-m3.2.1_year <- glm(Puppy ~ effort_3y_ago + effort_2y_ago + owned + subdistrict,
-                 family = binomial, data = sightings)
+m3.2.1_year <- glm(Puppy ~ effort_2y_ago + owned + subdistrict,
+                   family = binomial, data = sightings)
 drop1(m3.2.1_year, test = "Chisq") #drop 3y ago
 
-#Updated model dropping 3y ago
-m3.2.2_year <- glm(Puppy ~ effort_2y_ago + owned + subdistrict,
-                   family = binomial, data = sightings)
-drop1(m3.2.2_year, test = "Chisq") #drop owned
-
 #Updated model dropping owned
-m3.2.3_year <- glm(Puppy ~ effort_2y_ago + subdistrict,
+m3.2.2_year <- glm(Puppy ~ effort_2y_ago + subdistrict,
                    family = binomial, data = sightings)
-drop1(m3.2.3_year, test = "Chisq") #all significant
+drop1(m3.2.2_year, test = "Chisq") #all significant
 
 ################################################################################
 
 ##CHECK OVERDISPERSION##
 
 #Check with DHARMa
-simulationOutput_m3_year <- simulateResiduals(fittedModel = m3.2.3_year) #create simulated data
+simulationOutput_m3_year <- simulateResiduals(fittedModel = m3.2.2_year) #create simulated data
 
 testDispersion(simulationOutput_m3_year)
 
@@ -247,7 +232,7 @@ plot(simulationOutput_m3_year)
 ##COMPARE MODELS##
 
 #Compare AIC values
-AIC(m3.2.1_since, m3.2_effort, m3.2.3_year) #all very similar
+AIC(m3.2.1_since, m3.2_effort, m3.2.2_year) #all very similar
 
 ################################################################################
 
@@ -277,7 +262,7 @@ plot(preds_owned) +
   theme_minimal()
 
 #Plot yearly effort model
-preds_year <- ggpredict(m3.2.3_year, terms = c("effort_2y_ago", "subdistrict"))
+preds_year <- ggpredict(m3.2.2_year, terms = c("effort_2y_ago", "subdistrict"))
 
 plot(preds_year) +
   labs(x = "Sterilizations 2 Years Ago", y = "Predicted probability of being a puppy", color = "Subdistrict", title ="") +
