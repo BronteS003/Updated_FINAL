@@ -24,16 +24,7 @@ library(patchwork) #combine graphs into 1 panel
 ################################################################################
 
 ##LOAD RDS##
-sightings <- readRDS("Data/sightings_v3.rds")
-
-################################################################################
-
-##CREATE SUMMARY DATASET OF NUMBER OF DOGS OBSERVED PER DAY##
-dog_density <- sightings %>%
-  group_by(Timestamp, polygon, subdistrict, day, Mode.Transport, Track.Length, since_intervention, sc_total,
-           effort_all_time, effort_4y_ago, sc_4y, effort_3y_ago, sc_3y, effort_2y_ago, sc_2y, effort_1y_ago, sc_1y) %>%
-  summarise(Sighting.Count = n()) %>%
-  ungroup()
+dog_density <- readRDS("Data/density_v3.rds")
 
 ################################################################################
 
@@ -50,17 +41,35 @@ summary(m1_since)
 vif(m1_since) #all good
 
 #drop1 test
-drop1(m1_since, test = "Chisq") #all significant
+drop1(m1_since, test = "Chisq") #drop day
+
+#Updated model 1 dropping day
+m1.1_since <- glmer(Sighting.Count ~ since_intervention + subdistrict + Mode.Transport +
+                      (1 | polygon) +
+                      offset(log(Track.Length)), 
+                    family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+
+#Drop 1 test
+drop1(m1.1_since, test = "Chisq") #drop mode of transport
+
+#Updated model 1 dropping mode.transport
+m1_since_final <- glmer(Sighting.Count ~ since_intervention + subdistrict +
+                      (1 | polygon) +
+                      offset(log(Track.Length)), 
+                    family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
+
+#Drop 1 test
+drop1(m1_since_final, test = "Chisq") #all significant
 
 ################################################################################
 
 ##CHECK OVERDISPERSION##
 
 #Check residual deviance relative to degrees of freedom
-overdisp.glmer(m1_since) #1.902, close to concerning(?)
+overdisp.glmer(m1_since_final) #1.347, is this close to concerning(?)
 
 #Check with DHARMa
-simulationOutput_m1_since <- simulateResiduals(fittedModel = m1_since) #create simulated data
+simulationOutput_m1_since <- simulateResiduals(fittedModel = m1_since_final) #create simulated data
 
 testDispersion(simulationOutput_m1_since)
 

@@ -1,11 +1,11 @@
 ###############################################################################
-##                   FULL Dog Density RDS                                    ##
+##                   v2 Dog Density RDS                                      ##
 ###############################################################################
 ## Final version of cleaned and organized dog density and clinic data sets   ##
 ## with FULL updated dataset including most recent surveys/sterilizations    ##
-## as of October 2025. To be used in all FULL models.                        ##
+## as of April 2026. To be used v3 dog density model.                        ##
 ###############################################################################
-## Created Oct. 15, 2025 by Bronte Slote, last updated Nov. 19, 2025         ##
+## Created Oct. 15, 2025 by Bronte Slote, last updated Apr. 24, 2026         ##
 ###############################################################################
 
 ##LOAD LIBRARIES##
@@ -16,8 +16,10 @@ library(lubridate) #formatting dates and times
 library(ggplot2) #creating plots
 library(stringr) #manipulating text
 
+################################################################################
 
-##IMPORTING & CLEANING DATA ##
+
+##IMPORTING DATA ##
 
 #Import most up to date dog density dataset
 dog_densityRAW <- read.csv("Data/FULL_dog_density.csv")
@@ -25,6 +27,10 @@ dog_densityRAW <- read.csv("Data/FULL_dog_density.csv")
 #Rename columns
 dog_density <- dog_densityRAW %>% rename("polygon" = "Sandbox.Name", #rename so easier to remember
                                       "date"= "Timestamp")
+
+################################################################################
+
+##ORGANIZE POLYGONS AND SUBDISTRICTS##
 
 #Recognize polygon as a categorical variable with 7 levels
 dog_density <- dog_density %>%
@@ -42,6 +48,10 @@ dog_density$subdistrict <- str_extract(dog_density$polygon, "^[A-Za-z]+") #extra
 dog_density <- dog_density %>%
   mutate(subdistrict = factor(subdistrict, levels = c("KK","TC"))) #make "subdistrict" a factor with the levels 'KK' and 'TC'
 
+################################################################################
+
+##ORGANIZE DATES##
+
 #Recognize date as a date
 dog_density$date <- parse_date_time(dog_density$date, orders = "d B y, H:M")
 
@@ -53,6 +63,10 @@ dup_rows <- dog_density[dog_density$date %in% dog_density$date[duplicated(dog_de
 
 #Time zone error in row 25 causing to appear as duplicate day survey, add 1 day to time
 dog_density$date[25] <- dog_density$date[25] + days(2)
+
+################################################################################
+
+##CREATE SINCE INTERVENTION VARIABLE##
 
 #Create date since intervention column
 dog_density <- dog_density %>%
@@ -68,6 +82,10 @@ dog_density <- dog_density %>%
 dog_density <- dog_density %>%
   mutate(since_intervention = since_intervention / 365)
 
+################################################################################
+
+##SURVEY IDENTIFIER VARIABLE##
+
 #Create survey identifier based on polygon and year of survey
 dog_density <- dog_density %>%
   mutate( 
@@ -79,16 +97,23 @@ dog_density <- dog_density %>%
 dog_density <- dog_density %>%
   mutate(survey = as.factor(survey))
 
+################################################################################
+
+##CREATE DAY VARIABLE##
+
 #Create variable "day" to show either day 1 or 2 survey
 dog_density <- dog_density %>%
-  group_by(polygon, year) %>%                         # group by subdistrict and year
-  arrange(date, .by_group = TRUE) %>%                     # sort by date *within* each group
-  mutate(day = row_number()) %>%                          # assign 1 to earliest date, 2 to second day
+  group_by(survey) %>%
+  mutate(day = dense_rank(date)) %>%
   ungroup()
 
 #Make day a factor variable  
 dog_density <- dog_density %>%
   mutate(day= as.factor(day))
+
+################################################################################
+
+##FORMAT TRACK LENGTH, MODE OF TRANSPORT, AND OWNERSHIP STATUS##
 
 #Make track length into km instead of meters
 dog_density<-dog_density %>%
@@ -112,6 +137,7 @@ dog_density <- dog_density %>%
 dog_density <- dog_density %>%
   mutate(Owned = Free.roaming.collared + Confined.in.yard + On.chain.or.lead)
 
+################################################################################
 
 ##DEFINE STERILIZATION EFFORT##
 
@@ -125,6 +151,8 @@ clinic_data <- clinic_dataRAW %>%
 #Create new data set with only regions of "Khok Kurat" and "Tha Chang"
 KK_TC_Clinic <- clinic_data %>%
   filter(Subdistrict %in% c("Khok Kurat", "Tha Chang"))
+
+################################################################################
 
 ##Define variables in clinic_data data set
 
@@ -217,12 +245,14 @@ dog_density <- dog_density %>%
     subdistrict == "KK" ~ effort_1y_ago/3000,
     subdistrict == "TC" ~ effort_1y_ago/4938))
 
+################################################################################
+
 ##Save as objects
 
 #dog_density
-saveRDS(dog_density, file = "Data/FULL_dog_density.rds", ascii = FALSE, version = NULL,
+saveRDS(dog_density, file = "Data/density_v2.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
 #refined clinic data with only KK_TC_Clinic
-saveRDS(KK_TC_Clinic, file = "Data/FULL_clinic_data.rds", ascii = FALSE, version = NULL,
+saveRDS(KK_TC_Clinic, file = "Data/clinic_data_v2.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)

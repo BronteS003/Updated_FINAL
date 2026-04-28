@@ -2,9 +2,9 @@
 ##                      FULL Sightings RDS                                    ##
 ################################################################################
 ## Cleaned and organized sightings data set with the most up to date data as  ##
-## of October, 2025. For use in all future code using full data.              ##
+## of April, 2026. For use in all future code using full data.                ##
 ################################################################################
-## Created Oct. 15, 2025, by Bronte Slote, last updated Nov. 19               ##
+## Created Oct. 15, 2025, by Bronte Slote, last updated Apr. 24, 2026         ##
 ################################################################################
 
 ##LOAD LIBRARIES##
@@ -16,10 +16,14 @@ library(stringr) #manipulating text
 
 ################################################################################
 
-##IMPORT AND CLEAN DATA##
+##IMPORT DATA##
 
 ##Import Data set "sightings"
-sightingsRAW <- read.csv("Data & RDS/FULL_sightings.csv")
+sightingsRAW <- read.csv("Data/FULL_sightings.csv")
+
+################################################################################
+
+#ORGANIZE DATA - REMOVE RESIGHTS AND RENAME COLUMNS##
 
 #Remove all rows that are resights
 sightings <- sightingsRAW %>%
@@ -28,6 +32,14 @@ sightings <- sightingsRAW %>%
 ##Rename columns
 sightings <- sightings %>% rename("polygon" = "Sandbox.Name",#rename so easier to remember
                                   "date"= "Timestamp")
+
+#Define column Neutered as numerical
+sightings <- sightings %>%
+  mutate(Neutered = as.numeric(Neutered)) #make "Neutered" numerical
+
+###############################################################################
+
+##ORGANIZE POLYGONS AND SUBDISTRICTS##
 
 #Recognize polygon as a categorical variable with 7 levels
 sightings <- sightings %>%
@@ -38,16 +50,16 @@ sightings <- sightings %>%
   mutate(polygon = str_replace(polygon, "^Khok Kruat", "KK"),
          polygon = str_replace(polygon, "^Tha Chang", "TC"))
 
-#Define column Neutered as numerical
-sightings <- sightings %>%
-  mutate(Neutered = as.numeric(Neutered)) #make "Neutered" numerical
-
 #Create subdstrict column
 sightings$subdistrict <- str_extract(sightings$polygon, "^[A-Za-z]+") #extract the letters from the "polygon" column and make them a new column "subdistrict"
 
 #Define subdistrict as categorical with 2 levels
 sightings <- sightings %>%
   mutate(subdistrict = factor(subdistrict, levels = c("KK","TC"))) #make "subdistrict" a factor with the levels 'KK' and 'TC'
+
+################################################################################
+
+##CREATE SURVEY ID##
 
 #Create survey identifier based on polygon and year of survey
 sightings <- sightings %>%
@@ -59,6 +71,10 @@ sightings <- sightings %>%
 #Make survey a factor variable  
 sightings <- sightings %>%
   mutate(survey = as.factor(survey))
+
+################################################################################
+
+##ORGANIZE DATE##
 
 #Convert date to a date variable
 sightings <- sightings %>%
@@ -81,6 +97,10 @@ sightings <- sightings %>%
     date
   ))
 
+################################################################################
+
+##CREATE SINCE INTERVENTION COLUMN##
+
 #Create "since_intervention" column
 sightings <- sightings %>%
   mutate(
@@ -95,23 +115,23 @@ sightings <- sightings %>%
 sightings <- sightings %>%
   mutate(since_intervention = since_intervention / 365)
 
+################################################################################
+
+##CREATE DAY VARIABLE##
 
 #Create variable "day" to show either day 1 or 2 survey
 sightings <- sightings %>%
-  mutate(day = case_when( #create new column "day"
-    polygon == "KK 01" & date %in% as.Date(c("2021-10-07", "2023-03-01", "2024-08-27", "2025-09-04")) ~ 1,
-    polygon == "KK 06" & date %in% as.Date(c("2021-10-07", "2023-02-28", "2024-08-27", "2025-09-04")) ~ 1,
-    polygon == "KK 07" & date %in% as.Date(c("2021-10-07", "2023-02-28", "2024-08-27", "2025-09-04")) ~ 1,
-    polygon == "TC 12" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-18")) ~ 1,
-    polygon == "TC 16" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-10")) ~ 1,
-    polygon == "TC 20" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-18")) ~ 1,
-    polygon == "TC 24" & date %in% as.Date(c("2023-03-17", "2024-09-10", "2025-09-18")) ~ 1,
-    TRUE ~ 2  # everything else gets "2"
-  ))
+  group_by(survey) %>%
+  mutate(day = dense_rank(date)) %>%
+  ungroup()
 
 #Make day a factor variable  
 sightings <- sightings %>%
   mutate(day= as.factor(day))
+
+################################################################################
+
+##ORGANIZE OTHER PREDICTORS##
 
 #Make column age
 sightings <- sightings %>%
@@ -154,7 +174,7 @@ sightings <- na.omit(sightings) #one guy that doesn't have ownership status whic
 ##DEFINE STERILIZATION EFFORT##
 
 #Import data set "clinic data"
-clinic_data <- read.csv("Data & RDS/FULL_clinic_data.csv")
+clinic_data <- read.csv("Data/FULL_clinic_data.csv")
 
 #Define "subdistrict" as factor
 clinic_data <- clinic_data %>%
@@ -260,5 +280,5 @@ sightings <- sightings %>%
 #Save RDS
 
 #sightings
-saveRDS(sightings, file = "FULL_sightings.rds", ascii = FALSE, version = NULL,
+saveRDS(sightings, file = "Data/sightings_v2.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)

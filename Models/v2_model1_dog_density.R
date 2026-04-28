@@ -5,11 +5,10 @@
 # from Talea to calculate dogs per km of track surveyed. Using full dataset    #
 # (2021-2025).                                                                 #
 ################################################################################
-# Created Oct. 15, 2025 by Bronte Slote, last modified Mar. 16, 2026            #
+# Created Oct. 15, 2025 by Bronte Slote, last modified Apr. 24, 2026           #
 ################################################################################
 
-##Load Libraries
-library(readr) #reading csv files
+##Load Libraries##
 library(dplyr) #organizing and manipulating data
 library(lubridate) #formatting dates and times
 library(ggplot2) #creating plots
@@ -28,15 +27,13 @@ library(patchwork) #combine graphs into 1 panel
 ##IMPORT DATA SET##
 
 #Read rds for dog_density file
-dog_density <- readRDS("Data/FULL_dog_density.rds", refhook = NULL)
+dog_density <- readRDS("Data/density_v2.rds", refhook = NULL)
 
 ################################################################################
 
-##MODEL SELECTION##
+##FIT MODEL - TIME SINCE INTERVENTION##
 
-#Time Since Intervention
-
-#Create m1 using time since intervention
+#Most complex model 
 m1_since_intervention <- glmer(Sighting.Count ~ since_intervention + subdistrict + day + Mode.Transport +
                 (1 | polygon) +
                         offset(log(Track.Length)), 
@@ -51,7 +48,7 @@ drop1(m1_since_intervention, test="Chisq")
 
 #Create updated m1, dropping day 
 m1_1.since_intervention <- glmer(Sighting.Count ~ since_intervention + subdistrict + Mode.Transport +
-                                 (1 | polygon/survey) +
+                                 (1 | polygon) +
                                  offset(log(Track.Length)), 
                                family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 
@@ -60,16 +57,34 @@ drop1(m1_1.since_intervention, test="Chisq")
 
 #Create updated m1, dropping mode.transport
 final_since_intervention <- glmer(Sighting.Count ~ since_intervention + subdistrict +
-                                   (1 | polygon/survey) +
+                                   (1 | polygon) +
                                    offset(log(Track.Length)), 
                                  family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
 
 #Test what variables should be dropped
 drop1(final_since_intervention, test="Chisq")# all remaining variables significant
 
+##CHECK MODEL FIT##
+
+#Check residual deviance relative to degrees of freedom
+overdisp.glmer(final_since_intervention) #1.347, is this close to concerning(?)
+
+#Check with DHARMa
+simulationOutput_m1_since <- simulateResiduals(fittedModel = final_since_intervention) #create simulated data
+
+testDispersion(simulationOutput_m1_since)
+
+testOutliers(simulationOutput_m1_since)
+
+testZeroInflation(simulationOutput_m1_since)
+
+testUniformity(simulationOutput_m1_since)
+
+plot(simulationOutput_m1_since) #is there a problem with quantile deviation?
+
 ################################################################################
 
-#Total Sterilization Effort
+##FIT MODEL - TOTAL STERILIZATION EFFORT##
 
 #Create m1 using total sterilization effort by human population
 m1_effort_humanpop <- glmer(Sighting.Count ~ effort_humanpop + subdistrict + day + Mode.Transport +
@@ -100,6 +115,24 @@ m1_effort_final <- glmer(Sighting.Count ~ effort_humanpop + subdistrict +
 #Test what variables should be dropped
 drop1(m1_effort_final, test="Chisq") #all variables significant
 
+##CHECK MODEL FIT##
+
+#Check residual deviance relative to degrees of freedom
+overdisp.glmer(m1_effort_final) #1.38, is this close to concerning(?)
+
+#Check with DHARMa
+simulationOutput_m1_effort <- simulateResiduals(fittedModel = m1_effort_final) #create simulated data
+
+testDispersion(simulationOutput_m1_effort)
+
+testOutliers(simulationOutput_m1_effort)
+
+testZeroInflation(simulationOutput_m1_effort)
+
+testUniformity(simulationOutput_m1_effort)
+
+plot(simulationOutput_m1_effort) #is there a problem with quantile deviation?
+
 ##################################################################################################
 
 ##Sterilization by Year##
@@ -112,7 +145,7 @@ years_effort <- dog_density %>%
 corrplot(cor(years_effort, use = "pairwise.complete.obs"),
          method = "color",
          type = "upper",
-         tl.col = "black") #No correlation between years
+         tl.col = "black") #No concerning correlation between years
 
 #Most complex m1 using years
 m1_year <- glmer(Sighting.Count ~ effort_4y_humanpop + effort_3y_humanpop + effort_2y_humanpop + effort_1y_humanpop + subdistrict + day + Mode.Transport +
@@ -150,10 +183,28 @@ m1_year_final <- glmer(Sighting.Count ~ effort_4y_humanpop + effort_3y_humanpop 
 #Test what variables should be dropped
 drop1(m1_year_final, test="Chisq") #all remaining variables significant
 
+##CHECK MODEL FIT##
+
+#Check residual deviance relative to degrees of freedom
+overdisp.glmer(m1_year_final) #1.356, is this close to concerning(?)
+
+#Check with DHARMa
+simulationOutput_m1_year <- simulateResiduals(fittedModel = m1_year_final) #create simulated data
+
+testDispersion(simulationOutput_m1_year)
+
+testOutliers(simulationOutput_m1_year)
+
+testZeroInflation(simulationOutput_m1_year)
+
+testUniformity(simulationOutput_m1_year)
+
+plot(simulationOutput_m1_year) #is there a problem with quantile deviation?
+
 ################################################################################
 
 #Compare the three models
-AIC(final_since_intervention, m1_effort_final, m1_year_final) # since intervention has lowest AIC
+AIC(final_since_intervention, m1_effort_final, m1_year_final) # since intervention has lowest AIC, but they're all close
 
 ################################################################################
 
@@ -162,32 +213,9 @@ AIC(final_since_intervention, m1_effort_final, m1_year_final) # since interventi
 
 #Final model with since intervention
 m1_final_since<- glmer(Sighting.Count ~ since_intervention + subdistrict +
-                         (1 | polygon/survey) +
+                         (1 | polygon) +
                          offset(log(Track.Length)), 
                        family = poisson, data = dog_density,control=glmerControl(optimizer="bobyqa"))
-
-################################################################################
-
-##CHECK FOR OVERDISPERSION##
-
-#Check residual deviance relative to degrees of freedom
-overdisp.glmer(m1_final_since)
-
-#Visually check overdispersion using DHARMa plot
-simulationOutput_m1_since <- simulateResiduals(fittedModel = m1_final_since) #create simulated data
-testDispersion(simulationOutput_m1_since)
-
-#Test for outliers
-testOutliers(simulationOutput_m1_since)
-
-#Check for zero inflation
-testZeroInflation(simulationOutput_m1_since)
-
-#Check for uniformity
-testUniformity(simulationOutput_m1_since)
-
-# Residual plots
-plot(simulationOutput_m1_since) 
 
 ################################################################################
 
@@ -243,53 +271,3 @@ pred_exact <- ggpredict(
 )
 
 ################################################################################
-
-##Try to fix plot
-
-library(emmeans)
-
-#create prediction grid
-newdat <- expand.grid(
-  since_intervention = seq(
-    min(dog_density$since_intervention),
-    max(dog_density$since_intervention),
-    length.out = 50
-  ),
-  subdistrict = unique(dog_density$subdistrict),
-  Track.Length = 1
-)
-
-#get predicted values
-pred <- predict(
-  m1_final_since,
-  newdata = newdat,
-  type = "response",
-  re.form = NA,
-  se.fit = TRUE
-)
-
-newdat$predicted <- pred$fit
-newdat$se <- pred$se.fit
-
-#compute confidence intervals
-newdat <- newdat %>%
-  mutate(
-    conf.low = predicted - 1.96 * se,
-    conf.high = predicted + 1.96 * se
-  )
-
-#plot
-ggplot(newdat, aes(x = since_intervention, y = predicted, color = subdistrict)) +
-  geom_line() +
-  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2) +
-  labs(title = "Predicted Sightings/km by\n Time Since Intervention\n and Subdistrict",
-       x = "Time Since Intervention (Years)",
-       y = "Predicted Sightings per Km") +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    legend.position = "right",
-    axis.text = element_text(color = "gray30"),
-    panel.grid.minor = element_blank()
-  ) +
-  coord_cartesian(ylim = c(0, 22))
