@@ -34,31 +34,27 @@ if representative.
 FULL_clinic_data.csv - All clinic data (2021-2025) from Jai Dog's mobile and static
 clinic recording all admissions including sterilizations.
 
-FULL_clinic_data.rds - RDS file of cleaned clinic data for use in all
+clinic_data_v2.rds - Most up to date RDS file of cleaned clinic data for use in all
 models.
 
 FULL_dog_density.csv - All observations (2021-2025) from Jai Dog's sight and resight
 surveys summarized by each survey conducted.
 
-FULL_dog_density.rds - RDS file of cleaned dog density data for use in v2 model 1 - dog density.
+density_v2.rds - Most up to date RDS file of cleaned dog density data for use in v2 model 1 - dog density.
 
-FULL_dog_density_RDS.R - Code cleaning and formatting the
+v2_dog_density_RDS.R - Code cleaning and formatting the
 FULL_dog_density data set for use in all v2 model 1 dog density.
 
 FULL_sightings.csv - All observations (2021-2025) from Jai Dog's sight and resight
 surveys organized where each row is one dog observation.
 
-FULL_sightings.rds - RDS file of cleaned sightings data for use in all
+sightings_v2.rds - RDS file of cleaned sightings data for use in all
 v2 models.
 
-FULL_sightings_RDS.R - Code cleaning and formatting the FULL_sightings
+v2_sightings_RDS.R - Code cleaning and formatting the FULL_sightings
 data set for use in all subsequent models.
 
 KAP.csv - Raw KAP survey responses.
-
-obs_no_resights_rds.R - Code for updated sightings_v3.rds file combining track.length and mode of transport variables from dog density data set, with dog observations from sight surveys and measures of sterilization effort from clinic data. 
-
-sighting_v3.rds - Most up to dataset of all cleaned observations.
 
 
 ### Models
@@ -68,28 +64,20 @@ sighting_v3.rds - Most up to dataset of all cleaned observations.
 v2_day_comparison.R - Code exploring comparison of day 1 and day 2 sightings 
 and if they are significant for dog count.
 
-v2_model1_dog_density.R - Old version using FULL_sightings.rds including resights.
+v2_model1_dog_density.R - Most up to date -
 All code for model 1 dog density examining change in dog density against all measures of sterilization effort. 
 
-v2_model2_sterilization_status.R - Old version - All code for model 2 sterilization status 
+v2_model2_sterilization_status.R - Most up to date - All code for model 2 sterilization status 
 examining the probability a dog is sterilized based on all measures of sterilization effort. 
 
-v2_model3_population_makeup.R - Old version - All code for model 3 looking at the
+v2_model3_population_makeup.R - Most up to date - All code for model 3 looking at the
 likelihood a dog is a lactating female or puppy based on all measures of sterilization effort.
 
-v2_model4_health_status.R - Old version - All code for model 4 looking at the
+v2_model4_health_status.R - Most up to date - All code for model 4 looking at the
 likelihood a dog is healthy based on all measures of sterilization effort.
 
-v3_m1_density.R - Latest version using updated sighting_v3.rds - All code for model 1 dog density 
-examining change in dog density against all measures of sterilization effort. 
-
-v3_m2_sterilization.R - Latest version cleaned up formatting - All code for model 2 sterilization status 
-examining the probability a dog is sterilized based on all measures of sterilization effort. 
-
-v3_m3_sterilization.R - Latest version cleaned up formatting - All code for model 3 looking at the
-likelihood a dog is a lactating female or puppy based on all measures of sterilization effort.
-
-v3_m4_health.R - Latest version cleaned up formatting - All code for model 4 looking at the
+v3_effort_as_interaction.R - Code looking at usinf sterilization effort in models
+as an interaction between effort and subdistrict.
 likelihood a dog is healthy based on all measures of sterilization effort.
 
 
